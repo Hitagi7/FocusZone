@@ -1,4 +1,4 @@
-# focus_zone
+# FocusZone
 
 Mobile Development Project
 
