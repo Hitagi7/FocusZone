@@ -201,12 +201,11 @@ class _LandingPageState extends State<LandingPage> {
                       timeLeft: timeLeft,
                       currentMode: currentMode,
                       progress: progress,
+                      onToggleTimer: toggleTimer,
                     ),
                     SizedBox(height: 30),
                     ControlButtons(
-                      isRunning: isRunning,
                       currentMode: currentMode,
-                      onToggleTimer: toggleTimer,
                       onResetTimer: resetTimer,
                       onSkipToNext: skipToNext,
                     ),

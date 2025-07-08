@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppConstants {
   // Timer durations (in seconds)
-  static const int pomodoroTime = 10; //25 * 60;
+  static const int pomodoroTime = 25 * 60;
   static const int shortBreakTime = 5 * 60;
   static const int longBreakTime = 15 * 60;
 

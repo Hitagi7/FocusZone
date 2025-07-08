@@ -4,17 +4,13 @@ import '../models/timer_config.dart';
 import '../constants/app_constants.dart';
 
 class ControlButtons extends StatelessWidget {
-  final bool isRunning;
   final TimerMode currentMode;
-  final VoidCallback onToggleTimer;
   final VoidCallback onResetTimer;
   final VoidCallback onSkipToNext;
 
   const ControlButtons({
     Key? key,
-    required this.isRunning,
     required this.currentMode,
-    required this.onToggleTimer,
     required this.onResetTimer,
     required this.onSkipToNext,
   }) : super(key: key);
@@ -26,29 +22,6 @@ class ControlButtons extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Start/Stop button
-        ElevatedButton(
-          onPressed: onToggleTimer,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: config.color,
-            padding: EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(6),
-            ),
-            elevation: 4,
-          ),
-          child: Text(
-            isRunning ? AppConstants.pauseButtonText : AppConstants.startButtonText,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-
-        SizedBox(width: 20),
-
         // Reset button
         IconButton(
           onPressed: onResetTimer,
@@ -59,7 +32,7 @@ class ControlButtons extends StatelessWidget {
           ),
         ),
 
-        SizedBox(width: 10),
+        SizedBox(width: 20),
 
         // Skip button
         IconButton(
