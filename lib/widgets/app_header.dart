@@ -11,35 +11,46 @@ class AppHeader extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Logo
-          Row(
-            children: [
-              Icon(
-                Icons.timer,
-                color: Colors.white,
-                size: AppConstants.headerIconSize,
-              ),
-              SizedBox(width: 8),
-              Text(
-                AppConstants.appTitle,
-                style: TextStyle(
+          // Logo - Make it flexible
+          Flexible(
+            flex: 2,
+            child: Row(
+              mainAxisSize: MainAxisSize.min, // Add this
+              children: [
+                Icon(
+                  Icons.timer,
                   color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+                  size: AppConstants.headerIconSize,
                 ),
-              ),
-            ],
+                SizedBox(width: 8),
+                Flexible( // Wrap the text in Flexible
+                  child: Text(
+                    AppConstants.appTitle,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis, // Add overflow handling
+                  ),
+                ),
+              ],
+            ),
           ),
 
-          // Navigation buttons
-          Row(
-            children: [
-              _buildHeaderButton(context, Icons.insert_chart_outlined, 'Report'),
-              SizedBox(width: 8),
-              _buildHeaderButton(context, Icons.settings, 'Settings'),
-              SizedBox(width: 8),
-              _buildHeaderButton(context, Icons.account_circle, 'Login'),
-            ],
+          // Navigation buttons - Make them more compact
+          Flexible(
+            flex: 3,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildHeaderButton(context, Icons.insert_chart_outlined, 'Report'),
+                SizedBox(width: 4),
+                _buildHeaderButton(context, Icons.settings, 'Settings'),
+                SizedBox(width: 4),
+              ],
+            ),
           ),
         ],
       ),
@@ -47,15 +58,26 @@ class AppHeader extends StatelessWidget {
   }
 
   Widget _buildHeaderButton(BuildContext context, IconData icon, String label) {
-    return TextButton.icon(
-      onPressed: () {
-        // Show overlay/modal instead of navigation
-        _showOverlay(context, label);
-      },
-      icon: Icon(icon, color: Colors.white),
-      label: Text(
-        label,
-        style: TextStyle(color: Colors.white),
+    return Flexible( // Wrap in Flexible
+      child: TextButton.icon(
+        onPressed: () {
+          // Show overlay/modal instead of navigation
+          _showOverlay(context, label);
+        },
+        icon: Icon(icon, color: Colors.white, size: 20), // Slightly smaller icon
+        label: Text(
+          label,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 14, // Smaller font size
+          ),
+          overflow: TextOverflow.ellipsis, // Handle text overflow
+        ),
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Compact padding
+          minimumSize: Size(0, 0), // Remove minimum size constraints
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Reduce tap target
+        ),
       ),
     );
   }
