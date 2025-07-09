@@ -10,6 +10,7 @@ import 'widgets/timer_mode_selector.dart';
 import 'widgets/timer_display.dart';
 import 'widgets/control_buttons.dart';
 import 'widgets/round_counter.dart';
+import 'controllers/timer_controller.dart';
 
 void main() {
   runApp(FocusZoneApp());
@@ -36,75 +37,38 @@ class LandingPage extends StatefulWidget {
 }
 
 class _LandingPageState extends State<LandingPage> {
-  TimerMode currentMode = TimerMode.pomodoro;
-  bool isRunning = false;
-  int timeLeft = AppConstants.pomodoroTime;
-  int round = 1;
-  Timer? _timer;
+  late TimerController _timerController;
 
   @override
   void initState() {
     super.initState();
-    timeLeft = TimerConfigManager.getConfig(currentMode).time;
+    _timerController = TimerController();
+    _timerController.addListener(_onTimerUpdate);
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _timerController.removeListener(_onTimerUpdate);
+    _timerController.dispose();
     super.dispose();
   }
 
-  void switchMode(TimerMode mode) {
-    _timer?.cancel();
-    setState(() {
-      currentMode = mode;
-      timeLeft = TimerConfigManager.getConfig(mode).time;
-      isRunning = false;
-    });
-  }
+  void _onTimerUpdate() {
+    setState(() {});
 
-  void toggleTimer() {
-    setState(() {
-      isRunning = !isRunning;
-    });
-
-    if (isRunning) {
-      HapticFeedback.lightImpact();
-      _startTimer();
-    } else {
-      _stopTimer();
+    // Handle timer completion notification
+    if (_timerController.timeLeft == 0 && !_timerController.isRunning) {
+      _showCompletionNotification();
     }
   }
 
-  void _startTimer() {
-    _timer = Timer.periodic(Duration(seconds: AppConstants.timerUpdateIntervalSeconds), (timer) {
-      setState(() {
-        if (timeLeft > 0) {
-          timeLeft--;
-        } else {
-          _onTimerComplete();
-        }
-      });
-    });
-  }
-
-  void _stopTimer() {
-    _timer?.cancel();
-  }
-
-  void _onTimerComplete() {
-    _timer?.cancel();
-    setState(() {
-      isRunning = false;
-    });
-
-// Show completion notification
+  void _showCompletionNotification() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Container(
           alignment: Alignment.center,
           child: Text(
-            currentMode == TimerMode.pomodoro
+            _timerController.currentMode == TimerMode.pomodoro
                 ? AppConstants.pomodoroCompleteMessage
                 : AppConstants.breakCompleteMessage,
             textAlign: TextAlign.center,
@@ -117,70 +81,28 @@ class _LandingPageState extends State<LandingPage> {
           ),
         ),
         duration: Duration(seconds: 3),
-        backgroundColor: Colors.white.withOpacity(0.05), // Even more subtle
+        backgroundColor: Colors.white.withOpacity(0.05),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.all(16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        elevation: 2, // Minimal shadow
+        elevation: 2,
       ),
     );
-
-    // Vibrate to indicate completion
-    HapticFeedback.heavyImpact();
-
-    // Auto-switch to next mode
-    _autoSwitchMode();
   }
 
-  void _autoSwitchMode() {
-    TimerMode nextMode;
-    switch (currentMode) {
-      case TimerMode.pomodoro:
-        nextMode = (round % AppConstants.longBreakInterval == 0)
-            ? TimerMode.longBreak
-            : TimerMode.shortBreak;
-        break;
-      case TimerMode.shortBreak:
-      case TimerMode.longBreak:
-        nextMode = TimerMode.pomodoro;
-        if (currentMode == TimerMode.longBreak) {
-          round++;
-        }
-        break;
+  void _toggleTimer() {
+    if (!_timerController.isRunning) {
+      HapticFeedback.lightImpact();
     }
-
-    Future.delayed(Duration(seconds: AppConstants.autoSwitchDelaySeconds), () {
-      switchMode(nextMode);
-    });
-  }
-
-  void resetTimer() {
-    _timer?.cancel();
-    setState(() {
-      timeLeft = TimerConfigManager.getConfig(currentMode).time;
-      isRunning = false;
-    });
-  }
-
-  void skipToNext() {
-    _timer?.cancel();
-    setState(() {
-      isRunning = false;
-    });
-    _autoSwitchMode();
-  }
-
-  double get progress {
-    int totalTime = TimerConfigManager.getConfig(currentMode).time;
-    return (totalTime - timeLeft) / totalTime;
+    _timerController.toggleTimer();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: TimerConfigManager.getConfig(currentMode).color,
+      backgroundColor: TimerConfigManager.getConfig(_timerController.currentMode).color,
       body: SafeArea(
         child: Column(
           children: [
@@ -193,26 +115,26 @@ class _LandingPageState extends State<LandingPage> {
                   children: [
                     SizedBox(height: 40),
                     TimerModeSelector(
-                      currentMode: currentMode,
-                      onModeChanged: switchMode,
+                      currentMode: _timerController.currentMode,
+                      onModeChanged: _timerController.switchMode,
                     ),
                     SizedBox(height: 40),
                     TimerDisplay(
-                      timeLeft: timeLeft,
-                      currentMode: currentMode,
-                      progress: progress,
-                      onToggleTimer: toggleTimer,
+                      timeLeft: _timerController.timeLeft,
+                      currentMode: _timerController.currentMode,
+                      progress: _timerController.progress,
+                      onToggleTimer: _toggleTimer,
                     ),
                     SizedBox(height: 30),
                     ControlButtons(
-                      currentMode: currentMode,
-                      onResetTimer: resetTimer,
-                      onSkipToNext: skipToNext,
+                      currentMode: _timerController.currentMode,
+                      onResetTimer: _timerController.resetTimer,
+                      onSkipToNext: _timerController.skipToNext,
                     ),
                     SizedBox(height: 20),
                     RoundCounter(
-                      round: round,
-                      currentMode: currentMode,
+                      round: _timerController.round,
+                      currentMode: _timerController.currentMode,
                     ),
                   ],
                 ),
