@@ -6,7 +6,8 @@ import 'models/timer_mode.dart';
 import 'models/timer_config.dart';
 import 'constants/app_constants.dart';
 import 'widgets/app_header.dart';
-import 'widgets/timer_mode_selector.dart';
+// import 'widgets/timer_mode_selector.dart'; // Remove this
+import 'widgets/timer_mode_swiper.dart'; // Import the new swiper
 import 'widgets/timer_display.dart';
 import 'widgets/control_buttons.dart';
 import 'widgets/round_counter.dart';
@@ -54,9 +55,8 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   void _onTimerUpdate() {
-    setState(() {});
+    setState(() {}); // This will rebuild the UI, including the swiper if its currentMode needs to update
 
-    // Handle timer completion notification
     if (_timerController.timeLeft == 0 && !_timerController.isRunning) {
       _showCompletionNotification();
     }
@@ -99,10 +99,24 @@ class _LandingPageState extends State<LandingPage> {
     _timerController.toggleTimer();
   }
 
+  // This is the callback for the TimerModeSwiper
+  void _onModeSwiped(TimerMode newMode) {
+    if (_timerController.currentMode != newMode) { // Only switch if it's a new mode
+      HapticFeedback.selectionClick(); // Optional: haptic feedback for swipe
+      _timerController.switchMode(newMode);
+      // setState is called by _onTimerUpdate via the listener,
+      // or you can call it here if _switchMode doesn't trigger a listener update immediately
+      // that affects the background color or other elements dependent on currentMode.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Get the current background color based on the controller's mode
+    final currentConfig = TimerConfigManager.getConfig(_timerController.currentMode);
+
     return Scaffold(
-      backgroundColor: TimerConfigManager.getConfig(_timerController.currentMode).color,
+      backgroundColor: currentConfig.color, // Update background color dynamically
       body: SafeArea(
         child: Column(
           children: [
@@ -114,9 +128,10 @@ class _LandingPageState extends State<LandingPage> {
                 child: Column(
                   children: [
                     SizedBox(height: 40),
-                    TimerModeSelector(
+                    // Replace TimerModeSelector with TimerModeSwiper
+                    TimerModeSwiper(
                       currentMode: _timerController.currentMode,
-                      onModeChanged: _timerController.switchMode,
+                      onModeChanged: _onModeSwiped,
                     ),
                     SizedBox(height: 40),
                     TimerDisplay(
@@ -124,6 +139,7 @@ class _LandingPageState extends State<LandingPage> {
                       currentMode: _timerController.currentMode,
                       progress: _timerController.progress,
                       onToggleTimer: _toggleTimer,
+                      isRunning: _timerController.isRunning,
                     ),
                     SizedBox(height: 30),
                     ControlButtons(
@@ -146,3 +162,4 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 }
+// ctrl z
