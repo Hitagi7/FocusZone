@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'timer_mode.dart'; // Make sure TimerMode enum is imported
-import '../constants/app_constants.dart'; // Make sure your constants are imported
+import 'timer_mode.dart';
+import '../constants/app_constants.dart';
 
-// Defines the configuration for a specific timer mode
+// Configuration for each timer mode
 class TimerConfig {
-  final String label;
-  final int time; // Duration in seconds
-  final Color color;
+  final String label;    // Display name
+  final int time;        // Duration in seconds
+  final Color color;     // Background color
 
   TimerConfig({
     required this.label,
@@ -15,9 +15,9 @@ class TimerConfig {
   });
 }
 
-// Manages and provides access to configurations for different timer modes
+// Manages timer configurations for each mode
 class TimerConfigManager {
-  // Static map holding all the configurations, keyed by TimerMode
+  // Store configurations for each timer mode
   static final Map<TimerMode, TimerConfig> _configs = {
     TimerMode.pomodoro: TimerConfig(
       label: 'Pomodoro',
@@ -36,13 +36,8 @@ class TimerConfigManager {
     ),
   };
 
-  // Static method to get the configuration for a specific mode
+  // Get configuration for a specific timer mode
   static TimerConfig getConfig(TimerMode mode) {
-    // The '!' (null assertion operator) is used because we expect every TimerMode
-    // to have a corresponding configuration. If not, it's a programming error.
     return _configs[mode]!;
   }
-
-  // Optional: A getter to access all configurations if needed elsewhere
-  static Map<TimerMode, TimerConfig> get allConfigs => _configs;
 }

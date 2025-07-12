@@ -3,6 +3,7 @@ import '../models/timer_mode.dart';
 import '../constants/app_constants.dart';
 import 'circular_progress_painter.dart';
 
+// Displays the timer with circular progress indicator
 class TimerDisplay extends StatelessWidget {
   final int timeLeft;
   final TimerMode currentMode;
@@ -19,13 +20,15 @@ class TimerDisplay extends StatelessWidget {
     required this.isRunning,
   }) : super(key: key);
 
+  // Convert seconds to MM:SS format
   String formatTime(int seconds) {
     int minutes = seconds ~/ 60;
     int remainingSeconds = seconds % 60;
     return '${minutes.toString()}:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 
-  String _getTimerText() {
+  // Get the message to display below the timer
+  String _getTimerMessage() {
     if (!isRunning) {
       return 'Tap to start timer';
     }
@@ -37,8 +40,6 @@ class TimerDisplay extends StatelessWidget {
         return 'Time for a short break!';
       case TimerMode.longBreak:
         return 'Time for a long break!';
-      default:
-        return 'Time to focus!';
     }
   }
 
@@ -52,30 +53,32 @@ class TimerDisplay extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Circular Progress Indicator
+            // Circular progress indicator
             SizedBox(
               width: AppConstants.circularTimerSize,
               height: AppConstants.circularTimerSize,
               child: CustomPaint(
                 painter: CircularProgressPainter(
                   progress: progress,
-                  backgroundColor: Colors.white.withOpacity(0.2),
+                  backgroundColor: Colors.white.withValues(alpha: 0.2),
                   progressColor: Colors.white,
                   strokeWidth: AppConstants.progressStrokeWidth,
                 ),
               ),
             ),
-            // Timer Content
+            
+            // Timer content (time and message)
             Container(
               width: AppConstants.circularTimerInnerSize,
               height: AppConstants.circularTimerInnerSize,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // Time display
                   Text(
                     formatTime(timeLeft),
                     style: TextStyle(
@@ -85,13 +88,13 @@ class TimerDisplay extends StatelessWidget {
                       fontFamily: 'monospace',
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
+                  
+                  // Message below timer
                   Text(
-                    currentMode == TimerMode.pomodoro
-                        ? AppConstants.focusMessage
-                        : AppConstants.breakMessage,
+                    _getTimerMessage(),
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 16,
                     ),
                     textAlign: TextAlign.center,

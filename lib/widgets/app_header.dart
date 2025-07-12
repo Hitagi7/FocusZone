@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
 
+// App header with logo, title, and action buttons
 class AppHeader extends StatelessWidget {
   const AppHeader({Key? key}) : super(key: key);
 
@@ -11,88 +12,72 @@ class AppHeader extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Logo - Make it flexible
-          Flexible(
-            flex: 2,
-            child: Row(
-              mainAxisSize: MainAxisSize.min, // Add this
-              children: [
-                Icon(
-                  Icons.timer,
+          // App logo and title
+          Row(
+            children: [
+              Icon(
+                Icons.timer,
+                color: Colors.white,
+                size: 32,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                AppConstants.appTitle,
+                style: TextStyle(
                   color: Colors.white,
-                  size: AppConstants.headerIconSize,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Noto Sans Display',
                 ),
-                SizedBox(width: 8),
-                Flexible( // Wrap the text in Flexible
-                  child: Text(
-                    AppConstants.appTitle,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis, // Add overflow handling
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-
-          // Navigation buttons - Make them more compact
-          Flexible(
-            flex: 3,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildHeaderButton(context, Icons.insert_chart_outlined, 'Report'),
-                SizedBox(width: 4),
-                _buildHeaderButton(context, Icons.settings, 'Settings'),
-                SizedBox(width: 4),
-              ],
-            ),
+          
+          // Action buttons
+          Row(
+            children: [
+              _buildHeaderButton(context, Icons.insert_chart_outlined, 'Report'),
+              const SizedBox(width: 8),
+              _buildHeaderButton(context, Icons.settings, 'Settings'),
+            ],
           ),
         ],
       ),
     );
   }
 
+  // Build header button with icon and label
   Widget _buildHeaderButton(BuildContext context, IconData icon, String label) {
-    return Flexible( // Wrap in Flexible
-      child: TextButton.icon(
-        onPressed: () {
-          // Show overlay/modal instead of navigation
-          _showOverlay(context, label);
-        },
-        icon: Icon(icon, color: Colors.white, size: 20), // Slightly smaller icon
-        label: Text(
-          label,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14, // Smaller font size
-          ),
-          overflow: TextOverflow.ellipsis, // Handle text overflow
+    return TextButton.icon(
+      onPressed: () {
+        _showComingSoonDialog(context, label);
+      },
+      icon: Icon(icon, color: Colors.white, size: 20),
+      label: Text(
+        label,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 14,
         ),
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Compact padding
-          minimumSize: Size(0, 0), // Remove minimum size constraints
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Reduce tap target
-        ),
+      ),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       ),
     );
   }
 
-  void _showOverlay(BuildContext context, String feature) {
+  // Show coming soon dialog
+  void _showComingSoonDialog(BuildContext context, String feature) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext _) {
         return AlertDialog(
           title: Text(feature),
           content: Text('$feature feature coming soon!'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Close'),
+              child: const Text('Close'),
             ),
           ],
         );

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 
+// Custom painter for drawing circular progress indicator
 class CircularProgressPainter extends CustomPainter {
-  final double progress;
-  final Color backgroundColor;
-  final Color progressColor;
-  final double strokeWidth;
+  final double progress;      // Progress value (0.0 to 1.0)
+  final Color backgroundColor; // Background circle color
+  final Color progressColor;  // Progress arc color
+  final double strokeWidth;   // Width of the circle stroke
 
   CircularProgressPainter({
     required this.progress,
@@ -19,7 +20,7 @@ class CircularProgressPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - strokeWidth) / 2;
 
-    // Background circle
+    // Draw background circle
     final backgroundPaint = Paint()
       ..color = backgroundColor
       ..style = PaintingStyle.stroke
@@ -28,21 +29,21 @@ class CircularProgressPainter extends CustomPainter {
 
     canvas.drawCircle(center, radius, backgroundPaint);
 
-    // Progress arc
+    // Draw progress arc
     final progressPaint = Paint()
       ..color = progressColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
 
-    final startAngle = -pi / 2; // Start from top
-    final sweepAngle = 2 * pi * progress;
+    final startAngle = -pi / 2; // Start from top (12 o'clock)
+    final sweepAngle = 2 * pi * progress; // Calculate arc length
 
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       startAngle,
       sweepAngle,
-      false,
+      false, // Don't fill the arc
       progressPaint,
     );
   }

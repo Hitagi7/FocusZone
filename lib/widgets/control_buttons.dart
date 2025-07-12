@@ -1,28 +1,29 @@
 import 'package:flutter/material.dart';
-import '../models/timer_mode.dart';
-import '../models/timer_config.dart';
-import '../constants/app_constants.dart';
 
+// Control buttons for timer (reset and skip) - only visible when timer is running
 class ControlButtons extends StatelessWidget {
-  final TimerMode currentMode;
   final VoidCallback onResetTimer;
   final VoidCallback onSkipToNext;
+  final bool isRunning;
 
   const ControlButtons({
     Key? key,
-    required this.currentMode,
     required this.onResetTimer,
     required this.onSkipToNext,
+    required this.isRunning,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final config = TimerConfigManager.getConfig(currentMode);
+    // Only show buttons when timer is running
+    if (!isRunning) {
+      return SizedBox.shrink();
+    }
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Reset button
+        // Reset button - resets timer to full duration
         IconButton(
           onPressed: onResetTimer,
           icon: Icon(
@@ -32,9 +33,9 @@ class ControlButtons extends StatelessWidget {
           ),
         ),
 
-        SizedBox(width: 20),
+        const SizedBox(width: 20),
 
-        // Skip button
+        // Skip button - skips to next timer mode
         IconButton(
           onPressed: onSkipToNext,
           icon: Icon(
