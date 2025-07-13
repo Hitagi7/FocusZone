@@ -1,79 +1,41 @@
 import 'package:flutter/material.dart';
-import '../models/timer_mode.dart';
 
+// Displays the current round and cycle information
 class RoundCounter extends StatelessWidget {
   final int round;
-  final TimerMode currentMode;
 
   const RoundCounter({
-    super.key,
+    Key? key,
     required this.round,
-    required this.currentMode,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    int completedPomodoros = round - 1;
-    int currentCycle = ((completedPomodoros) ~/ 4) + 1;
-    int pomodorosInCurrentCycle = completedPomodoros % 4;
-
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: Colors.white.withOpacity(0.3)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
       ),
-      child: Column(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.timer,
-                color: Colors.white.withOpacity(0.8),
-                size: 18,
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Round #$round',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+          // Timer icon
+          Icon(
+            Icons.timer,
+            color: Colors.white.withValues(alpha: 0.8),
+            size: 18,
           ),
-          SizedBox(height: 8),
-          // Show progress dots for current cycle
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: List.generate(4, (index) {
-              bool isCompleted = index < pomodorosInCurrentCycle;
-              bool isCurrent = index == pomodorosInCurrentCycle && currentMode == TimerMode.pomodoro;
+          const SizedBox(width: 8),
 
-              return Container(
-                margin: EdgeInsets.symmetric(horizontal: 3),
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isCompleted
-                      ? Colors.white
-                      : isCurrent
-                      ? Colors.white.withOpacity(0.6)
-                      : Colors.white.withOpacity(0.3),
-                ),
-              );
-            }),
-          ),
-          SizedBox(height: 4),
+          // Round number
           Text(
-            'Cycle $currentCycle',
+            'Round #$round',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
-              fontSize: 12,
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

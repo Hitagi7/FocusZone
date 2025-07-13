@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'models/timer_mode.dart';
 import 'models/timer_config.dart';
 import 'constants/app_constants.dart';
 import 'widgets/app_header.dart';
-import 'widgets/timer_mode_selector.dart';
 import 'widgets/timer_display.dart';
 import 'widgets/control_buttons.dart';
 import 'widgets/round_counter.dart';
@@ -16,8 +14,6 @@ void main() {
 }
 
 class FocusZoneApp extends StatelessWidget {
-  const FocusZoneApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -33,66 +29,165 @@ class FocusZoneApp extends StatelessWidget {
 }
 
 class LandingPage extends StatefulWidget {
-  const LandingPage({super.key});
-
   @override
   _LandingPageState createState() => _LandingPageState();
 }
 
 class _LandingPageState extends State<LandingPage> {
   late TimerController _timerController;
+  int _currentPageIndex = 0; // Simple page index (0, 1, 2)
+  late PageController _pageController;
 
   @override
   void initState() {
     super.initState();
     _timerController = TimerController();
     _timerController.addListener(_onTimerUpdate);
+    _timerController.addListener(_onModeChanged);
+    _pageController = PageController(initialPage: _currentPageIndex);
   }
 
   @override
   void dispose() {
     _timerController.removeListener(_onTimerUpdate);
+    _timerController.removeListener(_onModeChanged);
     _timerController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
   void _onTimerUpdate() {
     setState(() {});
 
-    // Handle timer completion notification
     if (_timerController.timeLeft == 0 && !_timerController.isRunning) {
       _showCompletionNotification();
     }
   }
 
+  // Listen for mode changes from timer controller
+  void _onModeChanged() {
+    // Update page index to match the new timer mode
+    TimerMode newMode = _timerController.currentMode;
+    int newPageIndex = _getPageIndexForMode(newMode);
+
+    if (_currentPageIndex != newPageIndex) {
+      setState(() {
+        _currentPageIndex = newPageIndex;
+      });
+
+      // Animate to the new page
+      _pageController.animateToPage(
+        newPageIndex,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
   void _showCompletionNotification() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Container(
-          alignment: Alignment.center,
-          child: Text(
-            _timerController.currentMode == TimerMode.pomodoro
-                ? AppConstants.pomodoroCompleteMessage
-                : AppConstants.breakCompleteMessage,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'Noto Sans Display',
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
+    // Get the current mode that just completed
+    TimerMode completedMode = _timerController.currentMode;
+
+    // Show animated notification
+    _showAnimatedNotification(completedMode);
+  }
+
+  void _showAnimatedNotification(TimerMode completedMode) {
+    final overlay = Navigator.of(context).overlay;
+    assert(overlay != null, 'No overlay found in context!');
+
+    final overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        bottom: 20,
+        left: 16,
+        right: 16,
+        child: TweenAnimationBuilder<double>(
+          duration: const Duration(milliseconds: 800),
+          tween: Tween<double>(begin: 0.0, end: 1.0),
+          curve: Curves.elasticOut,
+          builder: (context, value, _) {
+            final clampedValue = value.clamp(0.0, 1.0);
+
+            return Transform.translate(
+              offset: Offset(0, 100 * (1 - clampedValue)),
+              child: Opacity(
+                opacity: clampedValue,
+                child: DefaultTextStyle(
+                  style: const TextStyle(
+                    fontFamily: 'Noto Sans Display',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: _getCompletionColor(completedMode),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                          spreadRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.check_circle,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            _getCompletionMessage(completedMode),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
-        duration: Duration(seconds: 3),
-        backgroundColor: Colors.white.withOpacity(0.05),
-        behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        elevation: 2,
       ),
     );
+
+    overlay!.insert(overlayEntry);
+
+    Future.delayed(const Duration(seconds: 3), () {
+      if (overlayEntry.mounted) {
+        overlayEntry.remove();
+      }
+    });
+  }
+
+  // Get completion message based on mode
+  String _getCompletionMessage(TimerMode mode) {
+    switch (mode) {
+      case TimerMode.pomodoro:
+        return 'Great work! Pomodoro completed!';
+      case TimerMode.shortBreak:
+        return 'Short break completed!';
+      case TimerMode.longBreak:
+        return 'Long break completed!';
+    }
+  }
+
+  // Get completion color based on mode
+  Color _getCompletionColor(TimerMode mode) {
+    switch (mode) {
+      case TimerMode.pomodoro:
+        return Colors.green.withValues(alpha: 0.9);
+      case TimerMode.shortBreak:
+        return Colors.blue.withValues(alpha: 0.9);
+      case TimerMode.longBreak:
+        return Colors.purple.withValues(alpha: 0.9);
+    }
   }
 
   void _toggleTimer() {
@@ -102,50 +197,229 @@ class _LandingPageState extends State<LandingPage> {
     _timerController.toggleTimer();
   }
 
+  // Handle skip button press
+  void _handleSkipToNext() {
+    _timerController.skipToNext();
+
+    // Update the page index to match the new timer mode
+    TimerMode newMode = _timerController.currentMode;
+    int newPageIndex = _getPageIndexForMode(newMode);
+
+    setState(() {
+      _currentPageIndex = newPageIndex;
+    });
+
+    // Animate to the new page
+    _pageController.animateToPage(
+      newPageIndex,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  // Handle page changes when user swipes
+  void _onPageChanged(int pageIndex) {
+    setState(() {
+      _currentPageIndex = pageIndex;
+    });
+
+    // Get the mode for this page
+    TimerMode newMode = _getModeForPage(pageIndex);
+
+    // Only switch timer mode if it's different
+    if (_timerController.currentMode != newMode) {
+      HapticFeedback.selectionClick();
+      _timerController.switchMode(newMode);
+    }
+  }
+
+  // Simple mapping: page 0 = Pomodoro, page 1 = Short Break, page 2 = Long Break
+  TimerMode _getModeForPage(int pageIndex) {
+    switch (pageIndex) {
+      case 0:
+        return TimerMode.pomodoro;
+      case 1:
+        return TimerMode.shortBreak;
+      case 2:
+        return TimerMode.longBreak;
+      default:
+        return TimerMode.pomodoro;
+    }
+  }
+
+  // Get page index for a given timer mode
+  int _getPageIndexForMode(TimerMode mode) {
+    switch (mode) {
+      case TimerMode.pomodoro:
+        return 0;
+      case TimerMode.shortBreak:
+        return 1;
+      case TimerMode.longBreak:
+        return 2;
+    }
+  }
+
+  // Get the label for each mode
+  String _getModeLabel(int pageIndex) {
+    switch (pageIndex) {
+      case 0:
+        return 'Pomodoro';
+      case 1:
+        return 'Short Break';
+      case 2:
+        return 'Long Break';
+      default:
+        return 'Pomodoro';
+    }
+  }
+
+  // Get the icon for each mode
+  IconData _getModeIcon(int pageIndex) {
+    switch (pageIndex) {
+      case 0:
+        return Icons.work;
+      case 1:
+        return Icons.coffee;
+      case 2:
+        return Icons.weekend;
+      default:
+        return Icons.work;
+    }
+  }
+
+  // Get the description for each mode
+  String _getModeDescription(int pageIndex) {
+    switch (pageIndex) {
+      case 0:
+        return 'Focus on your task';
+      case 1:
+        return 'Take a quick rest';
+      case 2:
+        return 'Time for a longer break';
+      default:
+        return 'Focus on your task';
+    }
+  }
+
+  // Get the background color for the current page
+  Color _getBackgroundColor() {
+    return TimerConfigManager.getConfig(_getModeForPage(_currentPageIndex)).color;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: TimerConfigManager.getConfig(_timerController.currentMode).color,
+      backgroundColor: _getBackgroundColor(),
       body: SafeArea(
         child: Column(
           children: [
+            // Header stays at the top
             AppHeader(),
+
+            // Swipeable content (timer and mode label)
             Expanded(
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 12),
-                constraints: BoxConstraints(maxWidth: 620),
-                child: Column(
-                  children: [
-                    SizedBox(height: 40),
-                    TimerModeSelector(
-                      currentMode: _timerController.currentMode,
-                      onModeChanged: _timerController.switchMode,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: PageView(
+                      controller: _pageController,
+                      onPageChanged: _onPageChanged,
+                      children: [
+                        _buildTimerPage(0),
+                        _buildTimerPage(1),
+                        _buildTimerPage(2),
+                      ],
                     ),
-                    SizedBox(height: 40),
-                    TimerDisplay(
-                      timeLeft: _timerController.timeLeft,
-                      currentMode: _timerController.currentMode,
-                      progress: _timerController.progress,
-                      onToggleTimer: _toggleTimer,
-                    ),
-                    SizedBox(height: 30),
-                    ControlButtons(
-                      currentMode: _timerController.currentMode,
-                      onResetTimer: _timerController.resetTimer,
-                      onSkipToNext: _timerController.skipToNext,
-                    ),
-                    SizedBox(height: 20),
-                    RoundCounter(
+                  ),
+
+                  // Round counter closer to timer
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    constraints: const BoxConstraints(maxWidth: 620),
+                    child: RoundCounter(
                       round: _timerController.round,
-                      currentMode: _timerController.currentMode,
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 130),
+                ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  // Build the timer page for each mode
+  Widget _buildTimerPage(int pageIndex) {
+    return Column(
+      children: [
+        // Enhanced mode label
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            children: [
+              // Mode icon
+              Icon(
+                _getModeIcon(pageIndex),
+                color: Colors.white.withValues(alpha: 0.9),
+                size: 32,
+              ),
+              const SizedBox(height: 8),
+              // Mode label with enhanced styling
+              Text(
+                _getModeLabel(pageIndex),
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                  fontFamily: 'Noto Sans Display',
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              // Mode description
+              Text(
+                _getModeDescription(pageIndex),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white.withValues(alpha: 0.7),
+                  fontFamily: 'Noto Sans Display',
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Timer display
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            constraints: const BoxConstraints(maxWidth: 620),
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+                TimerDisplay(
+                  timeLeft: _timerController.timeLeft,
+                  currentMode: _timerController.currentMode,
+                  progress: _timerController.progress,
+                  onToggleTimer: _toggleTimer,
+                  isRunning: _timerController.isRunning,
+                ),
+
+                // Control buttons below timer
+                const SizedBox(height: 20),
+                ControlButtons(
+                  onResetTimer: _timerController.resetTimer,
+                  onSkipToNext: _handleSkipToNext,
+                  isRunning: _timerController.isRunning,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'timer_mode.dart';
 import '../constants/app_constants.dart';
 
+// Configuration for each timer mode
 class TimerConfig {
-  final String label;
-  final int time;
-  final Color color;
+  final String label;    // Display name
+  final int time;        // Duration in seconds
+  final Color color;     // Background color
 
   TimerConfig({
     required this.label,
@@ -14,7 +15,9 @@ class TimerConfig {
   });
 }
 
+// Manages timer configurations for each mode
 class TimerConfigManager {
+  // Store configurations for each timer mode
   static final Map<TimerMode, TimerConfig> _configs = {
     TimerMode.pomodoro: TimerConfig(
       label: 'Pomodoro',
@@ -33,9 +36,8 @@ class TimerConfigManager {
     ),
   };
 
+  // Get configuration for a specific timer mode
   static TimerConfig getConfig(TimerMode mode) {
     return _configs[mode]!;
   }
-
-  static Map<TimerMode, TimerConfig> get allConfigs => _configs;
 }

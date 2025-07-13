@@ -32,10 +32,10 @@ class AppHeader extends StatelessWidget {
                 ),
               ),
             ],
-          ),
+          )
 
           // Action buttons
-          Row(
+          ,Row(
             children: [
               // Modified to show ReportScreen as a dialog, overlapping the landing page.
               _buildHeaderButton(context, Icons.insert_chart_outlined, 'Report', () {
@@ -48,7 +48,6 @@ class AppHeader extends StatelessWidget {
               }),
               const SizedBox(width: 8),
               _buildHeaderButton(context, Icons.settings, 'Settings', () {
-                _showComingSoonDialog(context, 'Settings');
               }),
             ],
           ),
@@ -72,25 +71,6 @@ class AppHeader extends StatelessWidget {
       style: TextButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       ),
-    );
-  }
-
-  // Show coming soon dialog
-  void _showComingSoonDialog(BuildContext context, String feature) {
-    showDialog(
-      context: context,
-      builder: (BuildContext _) {
-        return AlertDialog(
-          title: Text(feature),
-          content: Text('$feature feature coming soon!'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
     );
   }
 }
