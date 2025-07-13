@@ -12,13 +12,13 @@ class TimerDisplay extends StatelessWidget {
   final bool isRunning;
 
   const TimerDisplay({
-    Key? key,
+    super.key,
     required this.timeLeft,
     required this.currentMode,
     required this.progress,
     required this.onToggleTimer,
     required this.isRunning,
-  }) : super(key: key);
+  });
 
   // Convert seconds to MM:SS format
   String formatTime(int seconds) {
@@ -47,7 +47,7 @@ class TimerDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onToggleTimer,
-      child: Container(
+      child: SizedBox(
         width: AppConstants.circularTimerSize,
         height: AppConstants.circularTimerSize,
         child: Stack(
@@ -66,13 +66,13 @@ class TimerDisplay extends StatelessWidget {
                 ),
               ),
             ),
-
+            
             // Timer content (time and message)
             Container(
               width: AppConstants.circularTimerInnerSize,
               height: AppConstants.circularTimerInnerSize,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
+                color: Colors.white.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: Column(
@@ -89,7 +89,7 @@ class TimerDisplay extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-
+                  
                   // Message below timer
                   Text(
                     _getTimerMessage(),

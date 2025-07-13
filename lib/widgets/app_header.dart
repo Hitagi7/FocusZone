@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
-import '../screens/activity_report.dart'; // Import the Report screen
-import '../screens/user_settings.dart'; // Import the UserSettingsScreen
+import '../screens/user_settings.dart';
+import '../screens/activity_report.dart';
 
 // App header with logo, title, and action buttons
 class AppHeader extends StatelessWidget {
@@ -10,14 +10,23 @@ class AppHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.3),
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.white.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // App logo and title
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.timer,
                 color: Colors.white,
                 size: 32,
@@ -25,37 +34,25 @@ class AppHeader extends StatelessWidget {
               const SizedBox(width: 12),
               Text(
                 AppConstants.appTitle,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  fontFamily: 'NotoSansDisplay',
+                  fontFamily: 'Noto Sans Display',
                 ),
               ),
             ],
           ),
-
+          
           // Action buttons
           Row(
             children: [
-              // Shows ReportScreen as a dialog, overlapping the landing page.
               _buildHeaderButton(context, Icons.insert_chart_outlined, 'Report', () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return const ReportScreen(); // ReportScreen is designed as a Dialog
-                  },
-                );
-              })
-              ,const SizedBox(width: 8),
-              // Modified to show UserSettingsScreen as a dialog, overlapping the landing page.
+                _showReportScreen(context);
+              }),
+              const SizedBox(width: 8),
               _buildHeaderButton(context, Icons.settings, 'Settings', () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return const UserSettingsScreen(); // UserSettingsScreen is designed as a Dialog
-                  },
-                );
+                _showSettingsScreen(context);
               }),
             ],
           ),
@@ -64,14 +61,14 @@ class AppHeader extends StatelessWidget {
     );
   }
 
-  // Build header button with icon, label, and an onTap callback
-  Widget _buildHeaderButton(BuildContext context, IconData icon, String label, VoidCallback onTap) {
+  // Build header button with icon and label
+  Widget _buildHeaderButton(BuildContext context, IconData icon, String label, VoidCallback onPressed) {
     return TextButton.icon(
-      onPressed: onTap, // Use the provided onTap callback
+      onPressed: onPressed,
       icon: Icon(icon, color: Colors.white, size: 20),
       label: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           color: Colors.white,
           fontSize: 14,
         ),
@@ -79,6 +76,28 @@ class AppHeader extends StatelessWidget {
       style: TextButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       ),
+    );
+  }
+
+  // Show report screen
+  void _showReportScreen(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext _) {
+        return const ReportScreen();
+      },
+    );
+  }
+
+  // Show settings screen
+  void _showSettingsScreen(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext _) {
+        return const UserSettingsScreen();
+      },
     );
   }
 }

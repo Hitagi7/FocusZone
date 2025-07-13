@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../models/timer_mode.dart';
 import '../models/timer_config.dart';
 import '../constants/app_constants.dart';
+import 'audio_controller.dart';
 
 // Manages the timer state and logic
 class TimerController extends ChangeNotifier {
@@ -12,6 +13,7 @@ class TimerController extends ChangeNotifier {
   bool _isRunning = false;
   int _timeLeft = AppConstants.pomodoroTime;
   int _round = 1;
+  AudioController? _audioController;
 
   // Getters for UI to access timer state
   TimerMode get currentMode => _currentMode;
@@ -24,6 +26,11 @@ class TimerController extends ChangeNotifier {
     int totalTime = TimerConfigManager.getConfig(_currentMode).time;
     if (totalTime <= 0) return 0.0;
     return ((totalTime - _timeLeft) / totalTime).clamp(0.0, 1.0);
+  }
+
+  // Set audio controller reference
+  void setAudioController(AudioController audioController) {
+    _audioController = audioController;
   }
 
   // Start the timer
@@ -115,6 +122,9 @@ class TimerController extends ChangeNotifier {
     if (_currentMode == TimerMode.pomodoro) {
       _round++;
     }
+
+    // Play alarm sound
+    _audioController?.playAlarm();
 
     // Provide haptic feedback
     HapticFeedback.heavyImpact();

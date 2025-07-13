@@ -106,18 +106,21 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
           ),
           _buildLoginMessage(),
 
-          GridView.count(
-            crossAxisCount: 3,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 1.0,
-            children: [
-              _buildSummaryCard(Icons.access_time, 'hours focused'),
-              _buildSummaryCard(Icons.calendar_today, 'days accessed'),
-              _buildSummaryCard(Icons.local_fire_department, 'day streak'),
-            ],
+          SizedBox(
+            height: 200, // Fixed height to prevent overflow
+            child: GridView.count(
+              crossAxisCount: 3,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 1.2, // Increased aspect ratio to make cards smaller
+              children: [
+                _buildSummaryCard(Icons.access_time, 'hours focused'),
+                _buildSummaryCard(Icons.calendar_today, 'days accessed'),
+                _buildSummaryCard(Icons.local_fire_department, 'day streak'),
+              ],
+            ),
           ),
         ],
       ),
