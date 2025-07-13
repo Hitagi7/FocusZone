@@ -6,10 +6,10 @@ class RoundCounter extends StatelessWidget {
   final TimerMode currentMode;
 
   const RoundCounter({
-    Key? key,
+    super.key,
     required this.round,
     required this.currentMode,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

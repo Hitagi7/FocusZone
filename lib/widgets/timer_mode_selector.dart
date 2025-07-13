@@ -7,10 +7,10 @@ class TimerModeSelector extends StatelessWidget {
   final Function(TimerMode) onModeChanged;
 
   const TimerModeSelector({
-    Key? key,
+    super.key,
     required this.currentMode,
     required this.onModeChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

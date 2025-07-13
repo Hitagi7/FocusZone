@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:async';
 
 import 'models/timer_mode.dart';
 import 'models/timer_config.dart';
@@ -17,6 +16,8 @@ void main() {
 }
 
 class FocusZoneApp extends StatelessWidget {
+  const FocusZoneApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -32,6 +33,8 @@ class FocusZoneApp extends StatelessWidget {
 }
 
 class LandingPage extends StatefulWidget {
+  const LandingPage({super.key});
+
   @override
   _LandingPageState createState() => _LandingPageState();
 }

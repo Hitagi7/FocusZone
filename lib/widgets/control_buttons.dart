@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/timer_mode.dart';
 import '../models/timer_config.dart';
-import '../constants/app_constants.dart';
 
 class ControlButtons extends StatelessWidget {
   final TimerMode currentMode;
@@ -9,11 +8,11 @@ class ControlButtons extends StatelessWidget {
   final VoidCallback onSkipToNext;
 
   const ControlButtons({
-    Key? key,
+    super.key,
     required this.currentMode,
     required this.onResetTimer,
     required this.onSkipToNext,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

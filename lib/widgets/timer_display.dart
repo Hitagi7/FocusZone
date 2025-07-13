@@ -10,12 +10,12 @@ class TimerDisplay extends StatelessWidget {
   final VoidCallback onToggleTimer;
 
   const TimerDisplay({
-    Key? key,
+    super.key,
     required this.timeLeft,
     required this.currentMode,
     required this.progress,
     required this.onToggleTimer,
-  }) : super(key: key);
+  });
 
   String formatTime(int seconds) {
     int minutes = seconds ~/ 60;
@@ -27,7 +27,7 @@ class TimerDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onToggleTimer,
-      child: Container(
+      child: SizedBox(
         width: AppConstants.circularTimerSize,
         height: AppConstants.circularTimerSize,
         child: Stack(
