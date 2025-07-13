@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
-import '../Screens/activity_report.dart'; // Import the Report screen
+import '../screens/activity_report.dart'; // Import the Report screen
+import '../screens/user_settings.dart'; // Import the UserSettingsScreen
 
 // App header with logo, title, and action buttons
 class AppHeader extends StatelessWidget {
@@ -32,22 +33,29 @@ class AppHeader extends StatelessWidget {
                 ),
               ),
             ],
-          )
+          ),
 
           // Action buttons
-          ,Row(
+          Row(
             children: [
-              // Modified to show ReportScreen as a dialog, overlapping the landing page.
+              // Shows ReportScreen as a dialog, overlapping the landing page.
               _buildHeaderButton(context, Icons.insert_chart_outlined, 'Report', () {
                 showDialog(
                   context: context,
                   builder: (BuildContext context) {
-                    return const ReportScreen(); // ReportScreen is already designed as a Dialog
+                    return const ReportScreen(); // ReportScreen is designed as a Dialog
                   },
                 );
-              }),
-              const SizedBox(width: 8),
+              })
+              ,const SizedBox(width: 8),
+              // Modified to show UserSettingsScreen as a dialog, overlapping the landing page.
               _buildHeaderButton(context, Icons.settings, 'Settings', () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return const UserSettingsScreen(); // UserSettingsScreen is designed as a Dialog
+                  },
+                );
               }),
             ],
           ),
