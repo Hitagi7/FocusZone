@@ -40,4 +40,21 @@ class TimerConfigManager {
   static TimerConfig getConfig(TimerMode mode) {
     return _configs[mode]!;
   }
+
+  // Update configuration for a specific timer mode
+  static void updateConfig(TimerMode mode, int newTime) {
+    final oldConfig = _configs[mode]!;
+    _configs[mode] = TimerConfig(
+      label: oldConfig.label,
+      time: newTime,
+      color: oldConfig.color,
+    );
+  }
+
+  // Update all configs at once (for user settings)
+  static void updateAllConfigs({required int pomodoro, required int shortBreak, required int longBreak}) {
+    updateConfig(TimerMode.pomodoro, pomodoro);
+    updateConfig(TimerMode.shortBreak, shortBreak);
+    updateConfig(TimerMode.longBreak, longBreak);
+  }
 }

@@ -89,7 +89,7 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
     return const Padding(
       padding: EdgeInsets.symmetric(vertical: 16.0),
       child: Text(
-        '* This report will be available when you are logged in',
+        ' ',
         style: TextStyle(fontSize: 14, color: Colors.grey),
       ),
     );
@@ -138,15 +138,15 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, size: 30, color: const Color(0xFFF0B2B2)),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           const Text(
             '--',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
           ),
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, color: Colors.black54),
+            style: const TextStyle(fontSize: 12, color: Colors.black54),
           ),
         ],
       ),

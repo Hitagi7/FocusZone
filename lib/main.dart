@@ -14,11 +14,37 @@ import 'widgets/task_list.dart';
 import 'widgets/task_add.dart';
 import 'controllers/task_controller.dart';
 import 'notification_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+final GlobalKey<_LandingPageState> landingPageKey = GlobalKey<_LandingPageState>();
+
+bool globalAutoStartBreaks = false;
+bool globalAutoStartPomodoros = false;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService.initialize();
+  await _loadUserTimerSettings();
+  await _loadAutoStartSettings();
   runApp(FocusZoneApp());
+}
+
+Future<void> _loadUserTimerSettings() async {
+  final prefs = await SharedPreferences.getInstance();
+  final pomodoro = prefs.getInt('pomodoroTime') ?? 25;
+  final shortBreak = prefs.getInt('shortBreakTime') ?? 5;
+  final longBreak = prefs.getInt('longBreakTime') ?? 20;
+  TimerConfigManager.updateAllConfigs(
+    pomodoro: pomodoro * 60,
+    shortBreak: shortBreak * 60,
+    longBreak: longBreak * 60,
+  );
+}
+
+Future<void> _loadAutoStartSettings() async {
+  final prefs = await SharedPreferences.getInstance();
+  globalAutoStartBreaks = prefs.getBool('autoStartBreaks') ?? false;
+  globalAutoStartPomodoros = prefs.getBool('autoStartPomodoros') ?? false;
 }
 
 class FocusZoneApp extends StatelessWidget {
@@ -32,7 +58,7 @@ class FocusZoneApp extends StatelessWidget {
         primarySwatch: Colors.red,
         fontFamily: 'Noto Sans Display',
       ),
-      home: LandingPage(),
+      home: LandingPage(key: landingPageKey),
       debugShowCheckedModeBanner: false,
     );
   }
@@ -51,11 +77,17 @@ class _LandingPageState extends State<LandingPage> {
   int _currentPageIndex = 0; // Simple page index (0, 1, 2)
   late PageController _pageController;
   late TaskController _taskController;
+  bool _isPageAnimating = false; // Add this flag
+
+  TimerController get timerController => _timerController;
 
   @override
   void initState() {
     super.initState();
-    _timerController = TimerController();
+    _timerController = TimerController(
+      autoStartBreaks: globalAutoStartBreaks,
+      autoStartPomodoros: globalAutoStartPomodoros,
+    );
     _audioController = AudioController();
     _timerController.setAudioController(_audioController);
     _timerController.addListener(_onTimerUpdate);
@@ -92,8 +124,8 @@ class _LandingPageState extends State<LandingPage> {
       setState(() {
         _currentPageIndex = newPageIndex;
       });
-      
       // Animate to the new page
+      _isPageAnimating = true;
       _pageController.animateToPage(
         newPageIndex,
         duration: const Duration(milliseconds: 300),
@@ -211,8 +243,6 @@ class _LandingPageState extends State<LandingPage> {
       case TimerMode.longBreak:
         return Colors.purple.withValues(alpha: 0.9);
     }
-    // Unique fallback color (bright red for debugging)
-    return const Color(0xFFFF0000); // Red
   }
 
   void _toggleTimer() {
@@ -251,10 +281,14 @@ class _LandingPageState extends State<LandingPage> {
     // Get the mode for this page
     TimerMode newMode = _getModeForPage(pageIndex);
     
-    // Only switch timer mode if it's different
-    if (_timerController.currentMode != newMode) {
+    // Only switch timer mode if it's different and not animating
+    if (!_isPageAnimating && _timerController.currentMode != newMode) {
       HapticFeedback.selectionClick();
       _timerController.switchMode(newMode);
+    }
+    // Reset the animating flag
+    if (_isPageAnimating) {
+      _isPageAnimating = false;
     }
   }
 
@@ -282,8 +316,6 @@ class _LandingPageState extends State<LandingPage> {
       case TimerMode.longBreak:
         return 2;
     }
-    // Unique fallback index for debugging
-    return -1;
   }
 
   // Get the label for each mode
@@ -370,10 +402,6 @@ class _LandingPageState extends State<LandingPage> {
       ),
     );
   }
-
-
-
-
 
     @override
   Widget build(BuildContext context) {
@@ -536,7 +564,7 @@ class _LandingPageState extends State<LandingPage> {
                 const SizedBox(height: 24),
                 // Fixed space for control buttons
                 Expanded(
-                  flex: 1,
+                  flex: 0,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -554,5 +582,10 @@ class _LandingPageState extends State<LandingPage> {
         ),
       ],
     );
+  }
+
+  // Add a public method to update timer duration from outside
+  void updateTimerDurationFromSettings() {
+    _timerController.updateCurrentDurationIfNeeded();
   }
 }

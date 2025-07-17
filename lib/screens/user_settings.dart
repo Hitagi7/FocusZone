@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/timer_config.dart';
+import '../main.dart';
 
 class UserSettingsScreen extends StatefulWidget {
   const UserSettingsScreen({super.key});
@@ -11,17 +14,11 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
   // Timer settings
   final TextEditingController _pomodoroTimeController = TextEditingController(text: '25');
   final TextEditingController _shortBreakTimeController = TextEditingController(text: '5');
-  final TextEditingController _longBreakTimeController = TextEditingController(text: '15');
+  final TextEditingController _longBreakTimeController = TextEditingController(text: '20');
   bool _autoStartBreaks = false;
   bool _autoStartPomodoros = false;
   final TextEditingController _longBreakIntervalController = TextEditingController(text: '4');
-
-  // Sound settings
-  String _alarmSound = 'Kitchen';
-  double _alarmVolume = 50;
-  int _alarmRepeat = 1;
-  String _tickingSound = 'None';
-  double _tickingVolume = 50;
+  int _longBreakInterval = 4;
 
   // Theme settings
   Color _selectedThemeColor = Colors.red; // Default selected color
@@ -31,6 +28,103 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
   // Notification settings
   String _reminderTime = 'Last';
   final TextEditingController _reminderMinutesController = TextEditingController(text: '5');
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTimerSettings();
+    _loadAutoStartSettings();
+    _loadLongBreakInterval();
+  }
+
+  Future<void> _loadTimerSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    final pomodoro = prefs.getInt('pomodoroTime') ?? 25;
+    final shortBreak = prefs.getInt('shortBreakTime') ?? 5;
+    final longBreak = prefs.getInt('longBreakTime') ?? 20;
+    setState(() {
+      _pomodoroTimeController.text = pomodoro.toString();
+      _shortBreakTimeController.text = shortBreak.toString();
+      _longBreakTimeController.text = longBreak.toString();
+    });
+    TimerConfigManager.updateAllConfigs(
+      pomodoro: pomodoro * 60,
+      shortBreak: shortBreak * 60,
+      longBreak: longBreak * 60,
+    );
+  }
+
+  Future<void> _loadAutoStartSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _autoStartBreaks = prefs.getBool('autoStartBreaks') ?? false;
+      _autoStartPomodoros = prefs.getBool('autoStartPomodoros') ?? false;
+    });
+  }
+
+  Future<void> _saveAutoStartSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('autoStartBreaks', _autoStartBreaks);
+    await prefs.setBool('autoStartPomodoros', _autoStartPomodoros);
+  }
+
+  Future<void> _loadLongBreakInterval() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _longBreakInterval = prefs.getInt('longBreakInterval') ?? 4;
+      _longBreakIntervalController.text = _longBreakInterval.toString();
+    });
+    landingPageKey.currentState?.timerController.longBreakInterval = _longBreakInterval;
+  }
+
+  Future<void> _saveLongBreakInterval() async {
+    final prefs = await SharedPreferences.getInstance();
+    final interval = int.tryParse(_longBreakIntervalController.text) ?? 4;
+    await prefs.setInt('longBreakInterval', interval);
+    _longBreakInterval = interval;
+    landingPageKey.currentState?.timerController.longBreakInterval = interval;
+  }
+
+  Future<void> _saveTimerSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    final pomodoro = int.tryParse(_pomodoroTimeController.text) ?? 25;
+    final shortBreak = int.tryParse(_shortBreakTimeController.text) ?? 5;
+    final longBreak = int.tryParse(_longBreakTimeController.text) ?? 20;
+    if (pomodoro < 1 || shortBreak < 1 || longBreak < 1) {
+      _showInvalidDurationDialog();
+      return;
+    }
+    await prefs.setInt('pomodoroTime', pomodoro);
+    await prefs.setInt('shortBreakTime', shortBreak);
+    await prefs.setInt('longBreakTime', longBreak);
+    TimerConfigManager.updateAllConfigs(
+      pomodoro: pomodoro * 60,
+      shortBreak: shortBreak * 60,
+      longBreak: longBreak * 60,
+    );
+    // Update timer immediately
+    landingPageKey.currentState?.updateTimerDurationFromSettings();
+    // Save auto start toggles as well
+    await _saveAutoStartSettings();
+    // Save long break interval as well
+    await _saveLongBreakInterval();
+  }
+
+  void _showInvalidDurationDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Invalid Duration'),
+        content: const Text('All timer durations must be at least 1 minute.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -93,42 +187,19 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                             setState(() {
                               _autoStartBreaks = value;
                             });
+                            _saveAutoStartSettings();
+                            // Update running timer controller
+                            landingPageKey.currentState?.timerController.autoStartBreaks = value;
                           }),
                           _buildToggleSetting('Auto Start Pomodoros', _autoStartPomodoros, (bool value) {
                             setState(() {
                               _autoStartPomodoros = value;
                             });
+                            _saveAutoStartSettings();
+                            // Update running timer controller
+                            landingPageKey.currentState?.timerController.autoStartPomodoros = value;
                           }),
                           _buildTextInputSetting('Long Break interval', _longBreakIntervalController),
-                          const SizedBox(height: 20),
-                          const Divider(),
-
-                          // SOUND Section
-                          _buildSectionHeader(Icons.volume_up, 'SOUND'),
-                          _buildDropdownSetting('Alarm Sound', _alarmSound, ['Kitchen', 'Bell', 'Digital'], (String? newValue) {
-                            setState(() {
-                              _alarmSound = newValue!;
-                            });
-                          }),
-                          _buildSliderSetting(_alarmVolume, (double value) {
-                            setState(() {
-                              _alarmVolume = value;
-                            });
-                          }, 'repeat', _alarmRepeat.toString(), (String? newValue) {
-                            setState(() {
-                              _alarmRepeat = int.tryParse(newValue!) ?? 1;
-                            });
-                          }),
-                          _buildDropdownSetting('Ticking Sound', _tickingSound, ['None', 'Tick', 'Metronome'], (String? newValue) {
-                            setState(() {
-                              _tickingSound = newValue!;
-                            });
-                          }),
-                          _buildSliderSetting(_tickingVolume, (double value) {
-                            setState(() {
-                              _tickingVolume = value;
-                            });
-                          }),
                           const SizedBox(height: 20),
                           const Divider(),
 
@@ -160,7 +231,8 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                           Align(
                             alignment: Alignment.centerRight,
                             child: ElevatedButton(
-                              onPressed: () {
+                              onPressed: () async {
+                                await _saveTimerSettings();
                                 Navigator.of(context).pop(); // Close settings
                               },
                               style: ElevatedButton.styleFrom(
