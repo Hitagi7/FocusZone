@@ -378,6 +378,7 @@ class _LandingPageState extends State<LandingPage> {
     @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: _getBackgroundColor(),
       body: SafeArea(
         child: Stack(
@@ -436,18 +437,19 @@ class _LandingPageState extends State<LandingPage> {
                     ),
                   ),
                   
-                  // Add extra space before RoundCounter and tasks
-                  const SizedBox(height: 24),
+                  // Remove or reduce space before RoundCounter and tasks
+                  const SizedBox(height: 0),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                    constraints: const BoxConstraints(maxWidth: 620),
+                    constraints: const BoxConstraints(maxWidth: 400),
                     child: RoundCounter(
                       round: _timerController.round,
                     ),
                   ),
+                  const SizedBox(height: 0),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    constraints: const BoxConstraints(maxWidth: 620),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    constraints: const BoxConstraints(maxWidth: 300),
                     child: Column(
                       children: [
                         TaskAdd(taskController: _taskController),
@@ -456,8 +458,8 @@ class _LandingPageState extends State<LandingPage> {
                       ],
                     ),
                   ),
-                  // Reduce bottom space to avoid overflow
-                  const SizedBox(height: 40),
+                  // Reduce bottom space
+                  const SizedBox(height: 79),
                 ],
               ),
             ),
@@ -478,33 +480,33 @@ class _LandingPageState extends State<LandingPage> {
       children: [
         // Enhanced mode label
         Container(
-          padding: const EdgeInsets.symmetric(vertical: 20),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           child: Column(
             children: [
               // Mode icon
               Icon(
                 _getModeIcon(pageIndex),
                 color: Colors.white.withValues(alpha: 0.9),
-                size: 32,
+                size: 28,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               // Mode label with enhanced styling
               Text(
                 _getModeLabel(pageIndex),
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 22,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
                   fontFamily: 'Noto Sans Display',
                   letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               // Mode description
               Text(
                 _getModeDescription(pageIndex),
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 12,
                   color: Colors.white.withValues(alpha: 0.7),
                   fontFamily: 'Noto Sans Display',
                 ),
@@ -512,18 +514,18 @@ class _LandingPageState extends State<LandingPage> {
             ],
           ),
         ),
-        
-        // Timer display - fixed position
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            constraints: const BoxConstraints(maxWidth: 620),
-            child: Column(
+        // Timer display with reset/skip buttons overlaid
+        Padding(
+          padding: const EdgeInsets.only(top: 4, bottom: 50),
+          child: SizedBox(
+            width: AppConstants.circularTimerSize,
+            height: AppConstants.circularTimerSize,
+            child: Stack(
+              alignment: Alignment.center,
               children: [
-                const SizedBox(height: 20),
-                // Timer takes up most of the space
-                Expanded(
-                  flex: 4,
+                // Timer in the center
+                Align(
+                  alignment: Alignment.center,
                   child: TimerDisplay(
                     timeLeft: _timerController.timeLeft,
                     currentMode: _timerController.currentMode,
@@ -532,22 +534,26 @@ class _LandingPageState extends State<LandingPage> {
                     isRunning: _timerController.isRunning,
                   ),
                 ),
-                // Add extra space above control buttons
-                const SizedBox(height: 24),
-                // Fixed space for control buttons
-                Expanded(
-                  flex: 1,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ControlButtons(
-                        onResetTimer: _timerController.resetTimer,
-                        onSkipToNext: _handleSkipToNext,
-                        isRunning: _timerController.isRunning,
-                      ),
-                    ],
+                // Reset button (bottom left, lowered)
+                if (_timerController.isRunning)
+                  Positioned(
+                    left: -10,
+                    bottom: -10,
+                    child: IconButton(
+                      onPressed: _timerController.resetTimer,
+                      icon: Icon(Icons.refresh, color: Colors.white, size: 42),
+                    ),
                   ),
-                ),
+                // Skip button (bottom right, lowered)
+                if (_timerController.isRunning)
+                  Positioned(
+                    right: -10,
+                    bottom: -10, // less negative to lower it more
+                    child: IconButton(
+                      onPressed: _handleSkipToNext,
+                      icon: Icon(Icons.skip_next, color: Colors.white, size: 46),
+                    ),
+                  ),
               ],
             ),
           ),

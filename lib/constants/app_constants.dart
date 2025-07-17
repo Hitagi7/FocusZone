@@ -17,10 +17,10 @@ class AppConstants {
   static const int timerUpdateIntervalSeconds = 1;
 
   // UI sizes
-  static const double circularTimerSize = 320.0;
-  static const double circularTimerInnerSize = 280.0;
+  static const double circularTimerSize = 300.0;
+  static const double circularTimerInnerSize = 260.0;
   static const double progressStrokeWidth = 8.0;
-  static const double timerFontSize = 64.0;
+  static const double timerFontSize = 48.0;
 
   // App text
   static const String appTitle = 'FocusZone';

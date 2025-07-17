@@ -17,6 +17,7 @@ class TaskList extends StatelessWidget {
             maxHeight: 120.0, // Always show space for 2 tasks
             minHeight: 120.0, // Always show space for 2 tasks
           ),
+          padding: const EdgeInsets.symmetric(vertical: 2),
           child: tasks.isEmpty
               ? Center(
                   child: Text(

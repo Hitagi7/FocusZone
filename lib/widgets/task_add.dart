@@ -27,17 +27,17 @@ class _TaskAddState extends State<TaskAdd> {
         constraints: BoxConstraints(maxWidth: 400),
         child: TextField(
           controller: _controller,
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, fontSize: 12),
           decoration: InputDecoration(
             hintText: 'Add a new task...',
-            hintStyle: TextStyle(color: Colors.white54),
+            hintStyle: TextStyle(color: Colors.white54, fontSize: 11),
             filled: true,
             fillColor: Colors.white.withOpacity(0.08),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
-            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 2),
           ),
           onSubmitted: (_) => _addTask(),
         ),
