@@ -5,9 +5,9 @@ class RoundCounter extends StatelessWidget {
   final int round;
 
   const RoundCounter({
-    Key? key,
+    super.key,
     required this.round,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +16,7 @@ class RoundCounter extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -28,7 +28,7 @@ class RoundCounter extends StatelessWidget {
             size: 18,
           ),
           const SizedBox(width: 8),
-
+          
           // Round number
           Text(
             'Round #$round',

@@ -10,8 +10,14 @@ import 'widgets/round_counter.dart';
 import 'widgets/sound_button.dart';
 import 'controllers/timer_controller.dart';
 import 'controllers/audio_controller.dart';
+import 'widgets/task_list.dart';
+import 'widgets/task_add.dart';
+import 'controllers/task_controller.dart';
+import 'notification_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService.initialize();
   runApp(FocusZoneApp());
 }
 
@@ -44,6 +50,7 @@ class _LandingPageState extends State<LandingPage> {
   late AudioController _audioController;
   int _currentPageIndex = 0; // Simple page index (0, 1, 2)
   late PageController _pageController;
+  late TaskController _taskController;
 
   @override
   void initState() {
@@ -54,6 +61,7 @@ class _LandingPageState extends State<LandingPage> {
     _timerController.addListener(_onTimerUpdate);
     _timerController.addListener(_onModeChanged);
     _pageController = PageController(initialPage: _currentPageIndex);
+    _taskController = TaskController();
   }
 
   @override
@@ -100,6 +108,11 @@ class _LandingPageState extends State<LandingPage> {
     
     // Show animated notification
     _showAnimatedNotification(completedMode);
+    // Show local notification
+    NotificationService.showNotification(
+      title: 'Timer Complete',
+      body: _getCompletionMessage(completedMode),
+    );
   }
 
   void _showAnimatedNotification(TimerMode completedMode) {
@@ -423,8 +436,8 @@ class _LandingPageState extends State<LandingPage> {
                     ),
                   ),
                   
-                  // Round counter closer to timer
-                  const SizedBox(height: 10),
+                  // Add extra space before RoundCounter and tasks
+                  const SizedBox(height: 24),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     constraints: const BoxConstraints(maxWidth: 620),
@@ -432,7 +445,19 @@ class _LandingPageState extends State<LandingPage> {
                       round: _timerController.round,
                     ),
                   ),
-                  const SizedBox(height: 130),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    constraints: const BoxConstraints(maxWidth: 620),
+                    child: Column(
+                      children: [
+                        TaskAdd(taskController: _taskController),
+                        const SizedBox(height: 8),
+                        TaskList(taskController: _taskController),
+                      ],
+                    ),
+                  ),
+                  // Reduce bottom space to avoid overflow
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
@@ -507,7 +532,8 @@ class _LandingPageState extends State<LandingPage> {
                     isRunning: _timerController.isRunning,
                   ),
                 ),
-                
+                // Add extra space above control buttons
+                const SizedBox(height: 24),
                 // Fixed space for control buttons
                 Expanded(
                   flex: 1,

@@ -7,11 +7,11 @@ class ControlButtons extends StatelessWidget {
   final bool isRunning;
 
   const ControlButtons({
-    Key? key,
+    super.key,
     required this.onResetTimer,
     required this.onSkipToNext,
     required this.isRunning,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

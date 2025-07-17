@@ -17,14 +17,17 @@ class SoundButton extends StatelessWidget {
       builder: (context, child) {
         final hasSound = audioController.isPlaying;
         
-        return FloatingActionButton(
-          onPressed: () => _showSoundSelector(context),
-          backgroundColor: hasSound ? Colors.blue : Colors.grey[600],
-          foregroundColor: Colors.white,
-          elevation: 8,
-          child: Icon(
-            hasSound ? Icons.volume_up : Icons.volume_off,
-            size: 24,
+        return Opacity(
+          opacity: hasSound ? 1 : 0.5,
+          child: FloatingActionButton(
+            onPressed: () => _showSoundSelector(context),
+            backgroundColor: hasSound ? Colors.blue : Colors.grey[600],
+            foregroundColor: Colors.white,
+            elevation: 8,
+            child: Icon(
+              hasSound ? Icons.volume_up : Icons.volume_off,
+              size: 24,
+            ),
           ),
         );
       },
