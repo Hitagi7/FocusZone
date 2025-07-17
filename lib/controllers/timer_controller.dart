@@ -55,6 +55,7 @@ class TimerController extends ChangeNotifier {
 
   // Start the timer
   void startTimer() {
+    _timer?.cancel(); // Always clear any previous timer
     if (_isRunning) return;
 
     _isRunning = true;

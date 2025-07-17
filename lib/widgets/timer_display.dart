@@ -45,18 +45,22 @@ class TimerDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final timerDiameter = screenWidth * 0.60;
+    final timerInnerDiameter = timerDiameter * 0.85;
+    final timerFontSize = timerDiameter * 0.22;
     return GestureDetector(
       onTap: onToggleTimer,
       child: SizedBox(
-        width: AppConstants.circularTimerSize,
-        height: AppConstants.circularTimerSize,
+        width: timerDiameter,
+        height: timerDiameter,
         child: Stack(
           alignment: Alignment.center,
           children: [
             // Circular progress indicator
             SizedBox(
-              width: AppConstants.circularTimerSize,
-              height: AppConstants.circularTimerSize,
+              width: timerDiameter,
+              height: timerDiameter,
               child: CustomPaint(
                 painter: CircularProgressPainter(
                   progress: progress,
@@ -66,40 +70,43 @@ class TimerDisplay extends StatelessWidget {
                 ),
               ),
             ),
-            
             // Timer content (time and message)
-            Container(
-              width: AppConstants.circularTimerInnerSize,
-              height: AppConstants.circularTimerInnerSize,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Time display
-                  Text(
-                    formatTime(timeLeft),
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: AppConstants.timerFontSize,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'monospace',
+            AnimatedScale(
+              scale: isRunning ? 0.92 : 1.0,
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
+              child: Container(
+                width: timerInnerDiameter,
+                height: timerInnerDiameter,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Time display
+                    Text(
+                      formatTime(timeLeft),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: timerFontSize,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'monospace',
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  // Message below timer
-                  Text(
-                    _getTimerMessage(),
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      fontSize: 16,
+                    const SizedBox(height: 8),
+                    // Message below timer
+                    Text(
+                      _getTimerMessage(),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: (timerFontSize * 0.32).clamp(12.0, 20.0),
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

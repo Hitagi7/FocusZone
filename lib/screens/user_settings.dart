@@ -138,30 +138,35 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final scale = screenWidth / 400.0; // 400 is a typical mobile width
+    final dialogWidth = screenWidth * 0.95 > 550 ? 550.0 : screenWidth * 0.95;
+    final dialogHeight = screenHeight * 0.95 > 700 ? 700.0 : screenHeight * 0.95;
     return Scaffold(
       backgroundColor: Colors.transparent, // Keeps background transparent for modal effect
       body: Center(
         child: Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0 * scale)),
           clipBehavior: Clip.antiAlias,
           child: Container(
-            width: 550.0, // Adjusted width for settings content
-            height: 700.0, // Adjusted height for settings content
-            padding: const EdgeInsets.all(16.0),
+            width: dialogWidth,
+            height: dialogHeight,
+            padding: EdgeInsets.all(16.0 * scale),
             child: Column(
               children: [
                 // Header with title and close button
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  padding: EdgeInsets.symmetric(horizontal: 8.0 * scale, vertical: 4.0 * scale),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'SETTING',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 18 * scale, fontWeight: FontWeight.bold),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close),
+                        icon: Icon(Icons.close, size: 24 * scale),
                         onPressed: () {
                           Navigator.of(context).pop(); // Close the dialog
                         },
@@ -169,65 +174,55 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                     ],
                   ),
                 ),
-                const Divider(), // Separator below header
-
+                Divider(thickness: 1 * scale), // Separator below header
                 Expanded(
                   child: SingleChildScrollView(
                     child: Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: EdgeInsets.all(8.0 * scale),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // TIMER Section
-                          _buildSectionHeader(Icons.timer, 'TIMER'),
-                          const SizedBox(height: 16),
-                          _buildTimeInputRow(),
-                          const SizedBox(height: 20),
+                          _buildSectionHeader(Icons.timer, 'TIMER', scale),
+                          SizedBox(height: 16 * scale),
+                          _buildTimeInputRow(scale),
+                          SizedBox(height: 20 * scale),
                           _buildToggleSetting('Auto Start Breaks', _autoStartBreaks, (bool value) {
                             setState(() {
                               _autoStartBreaks = value;
                             });
                             _saveAutoStartSettings();
-                            // Update running timer controller
                             landingPageKey.currentState?.timerController.autoStartBreaks = value;
-                          }),
+                          }, scale),
                           _buildToggleSetting('Auto Start Pomodoros', _autoStartPomodoros, (bool value) {
                             setState(() {
                               _autoStartPomodoros = value;
                             });
                             _saveAutoStartSettings();
-                            // Update running timer controller
                             landingPageKey.currentState?.timerController.autoStartPomodoros = value;
-                          }),
-                          _buildTextInputSetting('Long Break interval', _longBreakIntervalController),
-                          const SizedBox(height: 20),
-                          const Divider(),
-
-                          // THEME Section
-                          _buildSectionHeader(Icons.edit, 'THEME'),
-                          _buildColorThemeSetting(),
+                          }, scale),
+                          _buildTextInputSetting('Long Break interval', _longBreakIntervalController, scale: scale),
+                          SizedBox(height: 20 * scale),
+                          Divider(thickness: 1 * scale),
+                          _buildSectionHeader(Icons.edit, 'THEME', scale),
+                          _buildColorThemeSetting(scale),
                           _buildDropdownSetting('Hour Format', _hourFormat, ['24-hour', '12-hour'], (String? newValue) {
                             setState(() {
                               _hourFormat = newValue!;
                             });
-                          }),
+                          }, scale),
                           _buildToggleSetting('Dark Mode when running', _darkModeWhenRunning, (bool value) {
                             setState(() {
                               _darkModeWhenRunning = value;
                             });
-                          }),
-                          _buildSmallWindowSetting(),
-                          const SizedBox(height: 20),
-                          const Divider(),
-
-                          // NOTIFICATION Section
-                          _buildSectionHeader(Icons.notifications, 'NOTIFICATION'),
-                          _buildReminderSetting(),
-                          _buildMobileAlarmSetting(),
-                          const SizedBox(height: 20),
-                          const Divider(),
-
-                          // OK Button at the bottom
+                          }, scale),
+                          _buildSmallWindowSetting(scale),
+                          SizedBox(height: 20 * scale),
+                          Divider(thickness: 1 * scale),
+                          _buildSectionHeader(Icons.notifications, 'NOTIFICATION', scale),
+                          _buildReminderSetting(scale),
+                          _buildMobileAlarmSetting(scale),
+                          SizedBox(height: 20 * scale),
+                          Divider(thickness: 1 * scale),
                           Align(
                             alignment: Alignment.centerRight,
                             child: ElevatedButton(
@@ -236,14 +231,14 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                                 Navigator.of(context).pop(); // Close settings
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey[800], // Dark grey background
-                                foregroundColor: Colors.white, // White text color
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                backgroundColor: Colors.grey[800],
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.symmetric(horizontal: 24 * scale, vertical: 12 * scale),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(8 * scale),
                                 ),
                               ),
-                              child: const Text('OK'),
+                              child: Text('OK', style: TextStyle(fontSize: 16 * scale)),
                             ),
                           ),
                         ],
@@ -259,117 +254,76 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
     );
   }
 
-  // Helper to build section headers
-  Widget _buildSectionHeader(IconData icon, String title) {
+  Widget _buildSectionHeader(IconData icon, String title, double scale) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: EdgeInsets.symmetric(vertical: 8.0 * scale),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: Colors.grey[700]),
-          const SizedBox(width: 8),
+          Icon(icon, size: 20 * scale, color: Colors.grey[700]),
+          SizedBox(width: 8 * scale),
           Text(
             title,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[700]),
+            style: TextStyle(fontSize: 16 * scale, fontWeight: FontWeight.bold, color: Colors.grey[700]),
           ),
         ],
       ),
     );
   }
 
-  // Helper to build time input row (Pomodoro, Short Break, Long Break)
-  Widget _buildTimeInputRow() {
+  Widget _buildTimeInputRow(double scale) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: _buildLabeledTimeInput('Pomodoro', _pomodoroTimeController)),
-        const SizedBox(width: 16),
-        Expanded(child: _buildLabeledTimeInput('Short Break', _shortBreakTimeController)),
-        const SizedBox(width: 16),
-        Expanded(child: _buildLabeledTimeInput('Long Break', _longBreakTimeController)),
+        Expanded(child: _buildLabeledTimeInput('Pomodoro', _pomodoroTimeController, scale)),
+        SizedBox(width: 16 * scale),
+        Expanded(child: _buildLabeledTimeInput('Short Break', _shortBreakTimeController, scale)),
+        SizedBox(width: 16 * scale),
+        Expanded(child: _buildLabeledTimeInput('Long Break', _longBreakTimeController, scale)),
       ],
     );
   }
 
-  // Helper for individual time input field
-  Widget _buildLabeledTimeInput(String label, TextEditingController controller) {
+  Widget _buildLabeledTimeInput(String label, TextEditingController controller, double scale) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 14, color: Colors.black87),
+          style: TextStyle(fontSize: 14 * scale, color: Colors.black87),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4 * scale),
         TextField(
           controller: controller,
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(8 * scale),
               borderSide: BorderSide.none,
             ),
             filled: true,
             fillColor: Colors.grey[200],
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 8 * scale),
           ),
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 16 * scale, fontWeight: FontWeight.bold),
         ),
       ],
     );
   }
 
-  // Helper to build a toggle setting (Switch)
-  Widget _buildToggleSetting(String label, bool value, ValueChanged<bool> onChanged) {
+  Widget _buildToggleSetting(String label, bool value, ValueChanged<bool> onChanged, double scale) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: EdgeInsets.symmetric(vertical: 8.0 * scale),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 16)),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeColor: Colors.red, // Active color for the switch
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Helper to build a text input setting
-  Widget _buildTextInputSetting(String label, TextEditingController controller, {bool showInfo = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Text(label, style: const TextStyle(fontSize: 16)),
-              if (showInfo)
-                const Padding(
-                  padding: EdgeInsets.only(left: 4.0),
-                  child: Icon(Icons.info_outline, size: 16, color: Colors.grey),
-                ),
-            ],
-          ),
-          SizedBox(
-            width: 80, // Fixed width for the input field
-            child: TextField(
-              controller: controller,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Colors.grey[200],
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16),
+          Text(label, style: TextStyle(fontSize: 16 * scale)),
+          Transform.scale(
+            scale: scale.clamp(0.8, 1.2),
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeColor: Colors.red,
             ),
           ),
         ],
@@ -377,19 +331,57 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
     );
   }
 
-  // Helper to build a dropdown setting
-  Widget _buildDropdownSetting(String label, String value, List<String> items, ValueChanged<String?> onChanged) {
+  Widget _buildTextInputSetting(String label, TextEditingController controller, {bool showInfo = false, double scale = 1.0}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: EdgeInsets.symmetric(vertical: 8.0 * scale),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 16)),
+          Row(
+            children: [
+              Text(label, style: TextStyle(fontSize: 16 * scale)),
+              if (showInfo)
+                Padding(
+                  padding: EdgeInsets.only(left: 4.0 * scale),
+                  child: Icon(Icons.info_outline, size: 16 * scale, color: Colors.grey),
+                ),
+            ],
+          ),
+          SizedBox(
+            width: 80 * scale,
+            child: TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8 * scale),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Colors.grey[200],
+                contentPadding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 8 * scale),
+              ),
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16 * scale),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDropdownSetting(String label, String value, List<String> items, ValueChanged<String?> onChanged, double scale) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.0 * scale),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontSize: 16 * scale)),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 4 * scale),
             decoration: BoxDecoration(
               color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(8 * scale),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
@@ -401,8 +393,8 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                     child: Text(item),
                   );
                 }).toList(),
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
-                icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                style: TextStyle(fontSize: 16 * scale, color: Colors.black87),
+                icon: Icon(Icons.arrow_drop_down, color: Colors.grey, size: 24 * scale),
               ),
             ),
           ),
@@ -411,7 +403,6 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
     );
   }
 
-  // Helper to build a slider setting with optional repeat input
   Widget _buildSliderSetting(double value, ValueChanged<double> onChanged, [String? suffixLabel, String? suffixValue, ValueChanged<String?>? onSuffixChanged]) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -460,19 +451,18 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
     );
   }
 
-  // Helper to build color theme selection
-  Widget _buildColorThemeSetting() {
+  Widget _buildColorThemeSetting(double scale) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: EdgeInsets.symmetric(vertical: 8.0 * scale),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('Color Themes', style: TextStyle(fontSize: 16)),
+          Text('Color Themes', style: TextStyle(fontSize: 16 * scale)),
           Row(
             children: [
-              _buildColorCircle(Colors.red, _selectedThemeColor == Colors.red),
-              _buildColorCircle(Colors.teal, _selectedThemeColor == Colors.teal),
-              _buildColorCircle(Colors.blue, _selectedThemeColor == Colors.blue),
+              _buildColorCircle(Colors.red, _selectedThemeColor == Colors.red, scale),
+              _buildColorCircle(Colors.teal, _selectedThemeColor == Colors.teal, scale),
+              _buildColorCircle(Colors.blue, _selectedThemeColor == Colors.blue, scale),
             ],
           ),
         ],
@@ -480,8 +470,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
     );
   }
 
-  // Helper for individual color circle
-  Widget _buildColorCircle(Color color, bool isSelected) {
+  Widget _buildColorCircle(Color color, bool isSelected, double scale) {
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -489,36 +478,36 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
         });
       },
       child: Container(
-        width: 30,
-        height: 30,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
+        width: 30 * scale,
+        height: 30 * scale,
+        margin: EdgeInsets.symmetric(horizontal: 4 * scale),
         decoration: BoxDecoration(
           color: color,
           shape: BoxShape.circle,
-          border: isSelected ? Border.all(color: Colors.black, width: 2) : null,
+          border: isSelected ? Border.all(color: Colors.black, width: 2 * scale) : null,
         ),
       ),
     );
   }
 
-  // Helper for "Small Window" button
-  Widget _buildSmallWindowSetting() {
+  Widget _buildSmallWindowSetting(double scale) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: EdgeInsets.symmetric(vertical: 8.0 * scale),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('Small Window', style: TextStyle(fontSize: 16)),
+          Text('Small Window', style: TextStyle(fontSize: 16 * scale)),
           OutlinedButton.icon(
             onPressed: () {
               // Handle "Open" action for small window
             },
-            icon: const Icon(Icons.open_in_new, size: 18),
-            label: const Text('Open'),
+            icon: Icon(Icons.open_in_new, size: 18 * scale),
+            label: Text('Open', style: TextStyle(fontSize: 14 * scale)),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.black87,
-              side: const BorderSide(color: Colors.grey),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              side: BorderSide(color: Colors.grey),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8 * scale)),
+              padding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 4 * scale),
             ),
           ),
         ],
@@ -526,21 +515,20 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
     );
   }
 
-  // Helper for Reminder setting
-  Widget _buildReminderSetting() {
+  Widget _buildReminderSetting(double scale) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: EdgeInsets.symmetric(vertical: 8.0 * scale),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('Reminder', style: TextStyle(fontSize: 16)),
+          Text('Reminder', style: TextStyle(fontSize: 16 * scale)),
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 4 * scale),
                 decoration: BoxDecoration(
                   color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(8 * scale),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
@@ -556,32 +544,32 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                         child: Text(value),
                       );
                     }).toList(),
-                    style: const TextStyle(fontSize: 16, color: Colors.black87),
-                    icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                    style: TextStyle(fontSize: 16 * scale, color: Colors.black87),
+                    icon: Icon(Icons.arrow_drop_down, color: Colors.grey, size: 24 * scale),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8 * scale),
               SizedBox(
-                width: 60,
+                width: 60 * scale,
                 child: TextField(
                   controller: _reminderMinutesController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(8 * scale),
                       borderSide: BorderSide.none,
                     ),
                     filled: true,
                     fillColor: Colors.grey[200],
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 8 * scale),
                   ),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16),
+                  style: TextStyle(fontSize: 16 * scale),
                 ),
               ),
-              const SizedBox(width: 8),
-              const Text('min', style: TextStyle(fontSize: 16)),
+              SizedBox(width: 8 * scale),
+              Text('min', style: TextStyle(fontSize: 16 * scale)),
             ],
           ),
         ],
@@ -589,19 +577,18 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
     );
   }
 
-  // Helper for Mobile Alarm setting
-  Widget _buildMobileAlarmSetting() {
+  Widget _buildMobileAlarmSetting(double scale) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: EdgeInsets.symmetric(vertical: 8.0 * scale),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
-              const Text('Mobile Alarm', style: TextStyle(fontSize: 16)),
-              const Padding(
-                padding: EdgeInsets.only(left: 4.0),
-                child: Icon(Icons.info_outline, size: 16, color: Colors.grey),
+              Text('Mobile Alarm', style: TextStyle(fontSize: 16 * scale)),
+              Padding(
+                padding: EdgeInsets.only(left: 4.0 * scale),
+                child: Icon(Icons.info_outline, size: 16 * scale, color: Colors.grey),
               ),
             ],
           ),
@@ -609,7 +596,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
             onPressed: () {
               // Handle "Add this device" action
             },
-            child: const Text('+ Add this device', style: TextStyle(color: Colors.blue)),
+            child: Text('+ Add this device', style: TextStyle(color: Colors.blue, fontSize: 14 * scale)),
           ),
         ],
       ),

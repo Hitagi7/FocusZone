@@ -444,61 +444,61 @@ class _LandingPageState extends State<LandingPage> {
               ),
             // Main content
             Column(
-          children: [
-            // Header stays at the top
-            AppHeader(),
-            
-            // Swipeable content (timer and mode label)
-            Expanded(
-              child: Column(
-                children: [
-                  Expanded(
-                    child: PageView(
-                      controller: _pageController,
-                      onPageChanged: _onPageChanged,
-                      children: [
-                        _buildTimerPage(0),
-                        _buildTimerPage(1),
-                        _buildTimerPage(2),
-                      ],
-                    ),
+              children: [
+                // Header stays at the top
+                AppHeader(),
+                // Swipeable content (timer and mode label)
+                Expanded(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: PageView(
+                          controller: _pageController,
+                          onPageChanged: _onPageChanged,
+                          children: [
+                            _buildTimerPage(0),
+                            _buildTimerPage(1),
+                            _buildTimerPage(2),
+                          ],
+                        ),
+                      ),
+                      // Add extra space before RoundCounter and tasks
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        constraints: const BoxConstraints(maxWidth: 620),
+                        child: RoundCounter(
+                          round: _timerController.round,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        constraints: const BoxConstraints(maxWidth: 620),
+                        child: Column(
+                          children: [
+                            TaskAdd(taskController: _taskController),
+                            const SizedBox(height: 8),
+                            TaskList(taskController: _taskController),
+                          ],
+                        ),
+                      ),
+                      // Reduce bottom space to avoid overflow
+                      const SizedBox(height: 16),
+                    ],
                   ),
-                  
-                  // Add extra space before RoundCounter and tasks
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    constraints: const BoxConstraints(maxWidth: 620),
-                    child: RoundCounter(
-                      round: _timerController.round,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    constraints: const BoxConstraints(maxWidth: 620),
-                    child: Column(
-                      children: [
-                        TaskAdd(taskController: _taskController),
-                        const SizedBox(height: 8),
-                        TaskList(taskController: _taskController),
-                      ],
-                    ),
-                  ),
-                  // Reduce bottom space to avoid overflow
-                  const SizedBox(height: 40),
-                ],
-              ),
+                ),
+              ],
             ),
+            // Floating action buttons for reset and next (only when running)
+            // Removed FABs for reset and next
           ],
         ),
-      ],
-    ),
-    ),
-    floatingActionButton: SoundButton(
-      audioController: _audioController,
-    ),
-  );
-}
+      ),
+      floatingActionButton: SoundButton(
+        audioController: _audioController,
+      ),
+    );
+  }
 
   // Build the timer page for each mode
   Widget _buildTimerPage(int pageIndex) {
@@ -542,44 +542,35 @@ class _LandingPageState extends State<LandingPage> {
         ),
         
         // Timer display - fixed position
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            constraints: const BoxConstraints(maxWidth: 620),
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
-                // Timer takes up most of the space
-                Expanded(
-                  flex: 4,
-                  child: TimerDisplay(
-                    timeLeft: _timerController.timeLeft,
-                    currentMode: _timerController.currentMode,
-                    progress: _timerController.progress,
-                    onToggleTimer: _toggleTimer,
-                    isRunning: _timerController.isRunning,
-                  ),
-                ),
-                // Add extra space above control buttons
-                const SizedBox(height: 24),
-                // Fixed space for control buttons
-                Expanded(
-                  flex: 0,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ControlButtons(
-                        onResetTimer: _timerController.resetTimer,
-                        onSkipToNext: _handleSkipToNext,
-                        isRunning: _timerController.isRunning,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+        Flexible(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Center(
+              child: TimerDisplay(
+                timeLeft: _timerController.timeLeft,
+                currentMode: _timerController.currentMode,
+                progress: _timerController.progress,
+                onToggleTimer: _toggleTimer,
+                isRunning: _timerController.isRunning,
+              ),
             ),
           ),
         ),
+        // Reserve space for ControlButtons row at all times
+        SizedBox(
+          height: 64, // Adjust if needed to fit your ControlButtons row
+          child: _timerController.isRunning
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 12.0, bottom: 8.0),
+                  child: ControlButtons(
+                    onResetTimer: _timerController.resetTimer,
+                    onSkipToNext: _handleSkipToNext,
+                    isRunning: _timerController.isRunning,
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+        const SizedBox(height: 18),
       ],
     );
   }
