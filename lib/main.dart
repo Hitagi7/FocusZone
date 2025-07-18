@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'models/timer_mode.dart';
 import 'models/timer_config.dart';
 import 'constants/app_constants.dart';
@@ -18,7 +19,26 @@ import 'notification_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService.initialize();
+  await _requestNotificationPermissions();
   runApp(FocusZoneApp());
+}
+
+Future<void> _requestNotificationPermissions() async {
+  try {
+    final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+        FlutterLocalNotificationsPlugin();
+    
+    final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
+        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    
+    if (androidImplementation != null) {
+      final bool? granted = await androidImplementation.requestNotificationsPermission();
+      print('[Main] Notification permission granted: $granted');
+    }
+  } catch (e) {
+    print('[Main] Error requesting notification permissions: $e');
+  }
 }
 
 class FocusZoneApp extends StatelessWidget {
@@ -108,10 +128,28 @@ class _LandingPageState extends State<LandingPage> {
     
     // Show animated notification
     _showAnimatedNotification(completedMode);
-    // Show local notification
+    
+    // Show local notification with mode-specific content
+    String title;
+    String body;
+    switch (completedMode) {
+      case TimerMode.pomodoro:
+        title = 'Pomodoro Timer Complete!';
+        body = 'Great work! Your focus session has ended. Time for a break.';
+        break;
+      case TimerMode.shortBreak:
+        title = 'Short Break Complete!';
+        body = 'Your short break has ended. Ready to focus again?';
+        break;
+      case TimerMode.longBreak:
+        title = 'Long Break Complete!';
+        body = 'Your long break has ended. Time to get back to work!';
+        break;
+    }
+    
     NotificationService.showNotification(
-      title: 'Timer Complete',
-      body: _getCompletionMessage(completedMode),
+      title: title,
+      body: body,
     );
   }
 
@@ -193,7 +231,7 @@ class _LandingPageState extends State<LandingPage> {
   String _getCompletionMessage(TimerMode mode) {
     switch (mode) {
       case TimerMode.pomodoro:
-        return 'Great work! Pomodoro completed!';
+        return 'Great work! Pomodoro timer completed!';
       case TimerMode.shortBreak:
         return 'Short break completed!';
       case TimerMode.longBreak:
@@ -468,8 +506,11 @@ class _LandingPageState extends State<LandingPage> {
       ],
     ),
     ),
-    floatingActionButton: SoundButton(
-      audioController: _audioController,
+    floatingActionButton: Align(
+      alignment: Alignment.bottomRight,
+      child: SoundButton(
+        audioController: _audioController,
+      ),
     ),
   );
 }
