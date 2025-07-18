@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:just_audio/just_audio.dart';
 import '../models/ambient_sound.dart';
 
 class AudioController extends ChangeNotifier {
@@ -24,9 +24,9 @@ class AudioController extends ChangeNotifier {
   AudioPlayer _getAudioPlayer(String soundId) {
     if (!_audioPlayers.containsKey(soundId)) {
       final player = AudioPlayer();
-      player.setReleaseMode(ReleaseMode.loop);
       final volume = getSoundVolume(soundId);
       player.setVolume(volume);
+      player.setLoopMode(LoopMode.all);
       _audioPlayers[soundId] = player;
     }
     return _audioPlayers[soundId]!;
@@ -45,7 +45,8 @@ class AudioController extends ChangeNotifier {
   Future<void> playSound(AmbientSound sound) async {
     try {
       final player = _getAudioPlayer(sound.id);
-      await player.play(AssetSource(sound.assetPath));
+      await player.setAsset(sound.assetPath);
+      await player.play();
       _activeSounds.add(sound.id);
       notifyListeners();
     } catch (e) {
@@ -93,7 +94,8 @@ class AudioController extends ChangeNotifier {
   Future<void> playAlarm() async {
     try {
       final alarmPlayer = AudioPlayer();
-      await alarmPlayer.play(AssetSource('sounds/alarm.mp3'));
+      await alarmPlayer.setAsset('sounds/alarm.mp3');
+      await alarmPlayer.play();
       // Don't add to active sounds since it's a one-time alarm
     } catch (e) {
       debugPrint('Error playing alarm: $e');
