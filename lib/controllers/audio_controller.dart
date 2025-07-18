@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
+import 'package:flutter_sound/flutter_sound.dart';
+import 'package:flutter/services.dart';
 import '../models/ambient_sound.dart';
 
 class AudioController extends ChangeNotifier {
-  final Map<String, AudioPlayer> _audioPlayers = {};
+  final Map<String, FlutterSoundPlayer> _audioPlayers = {};
   final Set<String> _activeSounds = {};
   final Map<String, double> _soundVolumes = {};
 
@@ -21,12 +22,15 @@ class AudioController extends ChangeNotifier {
   }
 
   // Get or create audio player for a sound
-  AudioPlayer _getAudioPlayer(String soundId) {
+  Future<FlutterSoundPlayer> _getAudioPlayer(String soundId) async {
     if (!_audioPlayers.containsKey(soundId)) {
-      final player = AudioPlayer();
+      final player = FlutterSoundPlayer();
+      
+      // Open the player first
+      await player.openPlayer();
+      
       final volume = getSoundVolume(soundId);
-      player.setVolume(volume);
-      player.setLoopMode(LoopMode.all);
+      await player.setVolume(volume);
       _audioPlayers[soundId] = player;
     }
     return _audioPlayers[soundId]!;
@@ -44,13 +48,34 @@ class AudioController extends ChangeNotifier {
   // Play ambient sound
   Future<void> playSound(AmbientSound sound) async {
     try {
-      final player = _getAudioPlayer(sound.id);
-      await player.setAsset(sound.assetPath);
-      await player.play();
+      final player = await _getAudioPlayer(sound.id);
+      
+      // Stop any current playback
+      await player.stopPlayer();
+      
+      // Load the asset data
+      final ByteData data = await rootBundle.load(sound.assetPath);
+      final Uint8List bytes = data.buffer.asUint8List();
+      
+      // Start playback with loop using fromDataBuffer
+      await player.startPlayer(
+        fromDataBuffer: bytes,
+        whenFinished: () {
+          // Restart the sound for looping
+          if (_activeSounds.contains(sound.id)) {
+            playSound(sound);
+          }
+        },
+      );
+      
       _activeSounds.add(sound.id);
       notifyListeners();
+      
     } catch (e) {
-      debugPrint('Error playing sound ${sound.id}: $e');
+      // debugPrint('Error playing sound ${sound.id}: $e');
+      // Remove from active sounds if there was an error
+      _activeSounds.remove(sound.id);
+      notifyListeners();
     }
   }
 
@@ -58,29 +83,42 @@ class AudioController extends ChangeNotifier {
   Future<void> stopSound(String soundId) async {
     final player = _audioPlayers[soundId];
     if (player != null) {
-      await player.stop();
-      _activeSounds.remove(soundId);
-      notifyListeners();
+      try {
+        await player.stopPlayer();
+        _activeSounds.remove(soundId);
+        notifyListeners();
+        
+      } catch (e) {
+        // debugPrint('Error stopping sound $soundId: $e');
+      }
     }
   }
 
   // Stop all sounds
   Future<void> stopAllSounds() async {
     for (final player in _audioPlayers.values) {
-      await player.stop();
+      try {
+        await player.stopPlayer();
+      } catch (e) {
+        // debugPrint('Error stopping player: $e');
+      }
     }
     _activeSounds.clear();
     notifyListeners();
   }
 
   // Set volume for a specific sound
-  void setSoundVolume(String soundId, double volume) {
+  Future<void> setSoundVolume(String soundId, double volume) async {
     final clampedVolume = volume.clamp(0.0, 1.0);
     _soundVolumes[soundId] = clampedVolume;
     
     final player = _audioPlayers[soundId];
     if (player != null) {
-      player.setVolume(clampedVolume);
+      try {
+        await player.setVolume(clampedVolume);
+      } catch (e) {
+        // debugPrint('Error setting volume for $soundId: $e');
+      }
     }
     notifyListeners();
   }
@@ -93,19 +131,33 @@ class AudioController extends ChangeNotifier {
   // Play alarm sound (for timer completion)
   Future<void> playAlarm() async {
     try {
-      final alarmPlayer = AudioPlayer();
-      await alarmPlayer.setAsset('sounds/alarm.mp3');
-      await alarmPlayer.play();
-      // Don't add to active sounds since it's a one-time alarm
+      final alarmPlayer = FlutterSoundPlayer();
+      await alarmPlayer.openPlayer();
+      
+      // Load the alarm asset data
+      final ByteData data = await rootBundle.load('assets/sounds/alarm.mp3');
+      final Uint8List bytes = data.buffer.asUint8List();
+      
+      await alarmPlayer.startPlayer(
+        fromDataBuffer: bytes,
+        whenFinished: () {
+          alarmPlayer.closePlayer();
+        },
+      );
+      
     } catch (e) {
-      debugPrint('Error playing alarm: $e');
+      // debugPrint('Error playing alarm: $e');
     }
   }
 
   @override
   void dispose() {
     for (final player in _audioPlayers.values) {
-      player.dispose();
+      try {
+        player.closePlayer();
+      } catch (e) {
+        // debugPrint('Error disposing player: $e');
+      }
     }
     _audioPlayers.clear();
     super.dispose();

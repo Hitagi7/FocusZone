@@ -38,7 +38,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   
   # Audio dependencies for ambient sounds
-  just_audio: ^0.9.36
+  flutter_sound: ^9.2.13
   path_provider: ^2.1.1
 
 dev_dependencies:
@@ -68,6 +68,8 @@ flutter:
     - assets/sounds/
     - assets/images/
     - assets/images/pomodoro_bg.gif
+    - assets/images/break_bg.gif
+    - assets/images/longbreak_bg.gif
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -191,30 +191,39 @@ class _AmbientSoundSelectorState extends State<AmbientSoundSelector>
                 const SizedBox(height: 8),
                 // Compact volume slider
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         Icons.volume_down,
                         color: Colors.grey[400],
-                        size: 12,
+                        size: 15,
                       ),
-                      Expanded(
-                        child: Slider(
-                          value: widget.audioController.getSoundVolume(sound.id),
-                          onChanged: (value) {
-                            widget.audioController.setSoundVolume(sound.id, value);
-                          },
-                          activeColor: currentIsPlaying ? Colors.blue[400] : Colors.grey[500],
-                          inactiveColor: Colors.grey[700],
-                          min: 0.0,
-                          max: 1.0,
+                      SizedBox(width: 4),
+                      Flexible(
+                        child: SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
+                            trackHeight: 4,
+                          ),
+                          child: Slider(
+                            value: widget.audioController.getSoundVolume(sound.id),
+                            onChanged: (value) async {
+                              await widget.audioController.setSoundVolume(sound.id, value);
+                            },
+                            activeColor: currentIsPlaying ? Colors.blue[400] : Colors.grey[500],
+                            inactiveColor: Colors.grey[700],
+                            min: 0.0,
+                            max: 1.0,
+                          ),
                         ),
                       ),
+                      SizedBox(width: 4),
                       Icon(
                         Icons.volume_up,
                         color: Colors.grey[400],
-                        size: 12,
+                        size: 15,
                       ),
                     ],
                   ),

@@ -42,10 +42,10 @@ Future<void> _requestNotificationPermissions() async {
     
     if (androidImplementation != null) {
       final bool? granted = await androidImplementation.requestNotificationsPermission();
-      print('[Main] Notification permission granted: $granted');
+      // print('[Main] Notification permission granted: $granted');
     }
   } catch (e) {
-    print('[Main] Error requesting notification permissions: $e');
+    // print('[Main] Error requesting notification permissions: $e');
   }
 }
 
@@ -403,38 +403,56 @@ class _LandingPageState extends State<LandingPage> {
     return TimerConfigManager.getConfig(_getModeForPage(_currentPageIndex)).color;
   }
 
-  // Load background image with multiple fallback options
-  Future<Widget> _loadBackgroundImage() async {
+  // Load background image for specific timer mode
+  Future<Widget> _loadBackgroundImage(TimerMode mode) async {
+    String gifPath;
+    Color fallbackColor;
+    
+    switch (mode) {
+      case TimerMode.pomodoro:
+        gifPath = 'images/pomodoro_bg.gif';
+        fallbackColor = AppConstants.pomodoroColor;
+        break;
+      case TimerMode.shortBreak:
+        gifPath = 'images/break_bg.gif';
+        fallbackColor = AppConstants.shortBreakColor;
+        break;
+      case TimerMode.longBreak:
+        gifPath = 'images/longbreak_bg.gif';
+        fallbackColor = AppConstants.longBreakColor;
+        break;
+    }
+
     final List<String> assetPaths = [
-      'images/pomodoro_bg.gif',
-      'assets/images/pomodoro_bg.gif',
+      gifPath,
+      'assets/$gifPath',
     ];
 
     for (String path in assetPaths) {
       try {
         await rootBundle.load(path);
-        print('Successfully loaded: $path');
+        // print('Successfully loaded: $path');
         return Image.asset(
           path,
           fit: BoxFit.cover,
           gaplessPlayback: true,
         );
       } catch (e) {
-        print('Failed to load $path: $e');
+        // print('Failed to load $path: $e');
         continue;
       }
     }
 
     // If all assets fail, return gradient
-    print('All assets failed, using gradient fallback');
+    // print('All assets failed, using gradient fallback');
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            AppConstants.pomodoroColor,
-            AppConstants.pomodoroColor.withValues(alpha: 0.8),
+            fallbackColor,
+            fallbackColor.withValues(alpha: 0.8),
           ],
         ),
       ),
@@ -449,38 +467,36 @@ class _LandingPageState extends State<LandingPage> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Background image for Pomodoro mode
-            if (_currentPageIndex == 0) // Pomodoro mode
-              Positioned.fill(
-                child: FutureBuilder<Widget>(
-                  future: _loadBackgroundImage(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return snapshot.data!;
-                    } else {
-                      return Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              AppConstants.pomodoroColor,
-                              AppConstants.pomodoroColor.withValues(alpha: 0.8),
-                            ],
-                          ),
+            // Background image for all timer modes
+            Positioned.fill(
+              child: FutureBuilder<Widget>(
+                future: _loadBackgroundImage(_getModeForPage(_currentPageIndex)),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return snapshot.data!;
+                  } else {
+                    return Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            _getBackgroundColor(),
+                            _getBackgroundColor().withValues(alpha: 0.8),
+                          ],
                         ),
-                      );
-                    }
-                  },
-                ),
+                      ),
+                    );
+                  }
+                },
               ),
+            ),
             // Semi-transparent overlay for better text readability
-            if (_currentPageIndex == 0) // Pomodoro mode
-              Positioned.fill(
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.3),
-                ),
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.3),
               ),
+            ),
             // Main content
             Column(
           children: [
