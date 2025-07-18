@@ -24,24 +24,30 @@ class ControlButtons extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         // Reset button - resets timer to full duration
-        IconButton(
-          onPressed: onResetTimer,
-          icon: Icon(
-            Icons.refresh,
-            color: Colors.white,
-            size: 36,
+        Padding(
+          padding: EdgeInsets.zero,
+          child: IconButton(
+            onPressed: onResetTimer,
+            icon: Icon(
+              Icons.refresh,
+              color: Colors.white,
+              size: 40,
+            ),
           ),
         ),
 
         const SizedBox(width: 20),
 
         // Skip button - skips to next timer mode
-        IconButton(
-          onPressed: onSkipToNext,
-          icon: Icon(
-            Icons.skip_next,
-            color: Colors.white,
-            size: 48,
+        Padding(
+          padding: EdgeInsets.zero,
+          child: IconButton(
+            onPressed: onSkipToNext,
+            icon: Icon(
+              Icons.skip_next,
+              color: Colors.white,
+              size: 40,
+            ),
           ),
         ),
       ],

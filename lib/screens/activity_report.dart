@@ -24,60 +24,71 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final scale = screenWidth / 400.0;
+    final dialogWidth = screenWidth * 0.95 > 500 ? 500.0 : screenWidth * 0.95;
+    final dialogHeight = screenHeight * 0.90 > 600 ? 600.0 : screenHeight * 0.90;
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Center(
-        child: Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-          clipBehavior: Clip.antiAlias,
-          child: Container(
-            width: 500.0,
-            height: 600.0,
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Align(
-                  alignment: Alignment.topRight,
-                  child: IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  child: TabBar(
-                    controller: _tabController,
-                    indicator: BoxDecoration(
-                      color: const Color(0xFFF0B2B2),
-                      borderRadius: BorderRadius.circular(10.0),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0 * scale)),
+            clipBehavior: Clip.antiAlias,
+            child: Container(
+              width: dialogWidth,
+              height: dialogHeight,
+              padding: EdgeInsets.all(16.0 * scale),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: IconButton(
+                        icon: Icon(Icons.close, size: 24 * scale),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
                     ),
-                    labelColor: Colors.white,
-                    unselectedLabelColor: Colors.grey[700],
-                    tabs: const [
-                      Tab(text: 'Summary'),
-                      Tab(text: 'Detail'),
-                    ],
-                  ),
+                    SizedBox(height: 8 * scale),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(10.0 * scale),
+                      ),
+                      child: TabBar(
+                        controller: _tabController,
+                        indicator: BoxDecoration(
+                          color: const Color(0xFFF0B2B2),
+                          borderRadius: BorderRadius.circular(10.0 * scale),
+                        ),
+                        labelColor: Colors.white,
+                        unselectedLabelColor: Colors.grey[700],
+                        labelStyle: TextStyle(fontSize: 14 * scale, fontWeight: FontWeight.bold),
+                        tabs: [
+                          Tab(text: 'Summary'),
+                          Tab(text: 'Detail'),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 20 * scale),
+                    SizedBox(
+                      height: dialogHeight * 0.7,
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildSummaryTab(scale),
+                          _buildDetailTab(scale),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildSummaryTab(),
-                      _buildDetailTab(),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -85,41 +96,46 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildLoginMessage() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 16.0),
+  Widget _buildLoginMessage(double scale) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 16.0 * scale),
       child: Text(
-        '* This report will be available when you are logged in',
-        style: TextStyle(fontSize: 14, color: Colors.grey),
+        ' ',
+        style: TextStyle(fontSize: 14 * scale, color: Colors.grey),
       ),
     );
   }
 
-  Widget _buildSummaryTab() {
+  Widget _buildSummaryTab(double scale) {
     return SingleChildScrollView(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center, // Centered content horizontally
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text(
+          Text(
             'Activity Summary',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 20 * scale, fontWeight: FontWeight.bold),
           ),
-          _buildLoginMessage(),
-
+          _buildLoginMessage(scale),
           SizedBox(
-            height: 200, // Fixed height to prevent overflow
+            height: 120 * scale,
             child: GridView.count(
-              crossAxisCount: 3,
+              crossAxisCount: 2,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 1.2, // Increased aspect ratio to make cards smaller
+              mainAxisSpacing: 10 * scale,
+              crossAxisSpacing: 10 * scale,
+              childAspectRatio: 1.2,
               children: [
-                _buildSummaryCard(Icons.access_time, 'hours focused'),
-                _buildSummaryCard(Icons.calendar_today, 'days accessed'),
-                _buildSummaryCard(Icons.local_fire_department, 'day streak'),
+                _buildSummaryCard(Icons.access_time, 'hours focused', scale),
+                _buildSummaryCard(Icons.calendar_today, 'days accessed', scale),
               ],
+            ),
+          ),
+          SizedBox(height: 10 * scale),
+          Center(
+            child: SizedBox(
+              width: 140 * scale,
+              child: _buildSummaryCard(Icons.local_fire_department, 'day streak', scale),
             ),
           ),
         ],
@@ -127,95 +143,99 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildSummaryCard(IconData icon, String label) {
+  Widget _buildSummaryCard(IconData icon, String label, double scale) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFFCE4E4),
-        borderRadius: BorderRadius.circular(10.0),
+        borderRadius: BorderRadius.circular(10.0 * scale),
       ),
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(16.0 * scale),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 30, color: const Color(0xFFF0B2B2)),
-          const SizedBox(height: 8),
-          const Text(
+          Icon(icon, size: 30 * scale, color: const Color(0xFFF0B2B2)),
+          SizedBox(height: 6 * scale),
+          Text(
             '--',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+            style: TextStyle(fontSize: 12 * scale, fontWeight: FontWeight.bold, color: Colors.black87),
           ),
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, color: Colors.black54),
+            style: TextStyle(fontSize: 12 * scale, color: Colors.black54),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDetailTab() {
+  Widget _buildDetailTab(double scale) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center, // Centered content horizontally
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text(
+        Text(
           'Focus Time Detail',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 18 * scale, fontWeight: FontWeight.bold),
         ),
-        _buildLoginMessage(),
-
+        _buildLoginMessage(scale),
         Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.vertical,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              // Wrapped DataTable in Center to horizontally center it if it doesn't fill the width
-              child: Center(
-                child: DataTable(
-                  columns: const [
-                    DataColumn(label: Text('DATE', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('PROJECT / TASK', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('MINUTES', style: TextStyle(fontWeight: FontWeight.bold))),
-                  ],
-                  rows: const [
-                    DataRow(cells: [
-                      DataCell(Text('2023-10-26')),
-                      DataCell(Text('Project Alpha')),
-                      DataCell(Text('60')),
-                    ]),
-                    DataRow(cells: [
-                      DataCell(Text('2023-10-25')),
-                      DataCell(Text('Task Beta')),
-                      DataCell(Text('45')),
-                    ]),
-                    DataRow(cells: [
-                      DataCell(Text('2023-10-24')),
-                      DataCell(Text('Meeting Prep')),
-                      DataCell(Text('30')),
-                    ]),
-                  ],
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Center(
+                      child: DataTable(
+                        columnSpacing: 16 * scale,
+                        columns: [
+                          DataColumn(label: Text('DATE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13 * scale))),
+                          DataColumn(label: Text('PROJECT / TASK', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13 * scale))),
+                          DataColumn(label: Text('MINUTES', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13 * scale))),
+                        ],
+                        rows: [
+                          DataRow(cells: [
+                            DataCell(Text('2023-10-26', style: TextStyle(fontSize: 12 * scale))),
+                            DataCell(Text('Project Alpha', style: TextStyle(fontSize: 12 * scale))),
+                            DataCell(Text('60', style: TextStyle(fontSize: 12 * scale))),
+                          ]),
+                          DataRow(cells: [
+                            DataCell(Text('2023-10-25', style: TextStyle(fontSize: 12 * scale))),
+                            DataCell(Text('Task Beta', style: TextStyle(fontSize: 12 * scale))),
+                            DataCell(Text('45', style: TextStyle(fontSize: 12 * scale))),
+                          ]),
+                          DataRow(cells: [
+                            DataCell(Text('2023-10-24', style: TextStyle(fontSize: 12 * scale))),
+                            DataCell(Text('Meeting Prep', style: TextStyle(fontSize: 12 * scale))),
+                            DataCell(Text('30', style: TextStyle(fontSize: 12 * scale))),
+                          ]),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-        ),
-
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back_ios),
-                onPressed: () {
-                  // Handle previous page
-                },
-              ),
-              const Text('1', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              IconButton(
-                icon: const Icon(Icons.arrow_forward_ios),
-                onPressed: () {
-                  // Handle next page
-                },
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 16.0 * scale),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.arrow_back_ios, size: 20 * scale),
+                      onPressed: () {
+                        // Handle previous page
+                      },
+                    ),
+                    Text('1', style: TextStyle(fontSize: 16 * scale, fontWeight: FontWeight.bold)),
+                    IconButton(
+                      icon: Icon(Icons.arrow_forward_ios, size: 20 * scale),
+                      onPressed: () {
+                        // Handle next page
+                      },
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 // App-wide constants and settings
 class AppConstants {
   // Timer durations (in seconds)
-  static const int pomodoroTime = 3;    // 25 minutes
-  static const int shortBreakTime = 2;    // 5 minutes
-  static const int longBreakTime = 15 * 60;    // 15 minutes
+  static const int pomodoroTime = 25 * 60;    // 25 minutes
+  static const int shortBreakTime = 5 * 60;   // 5 minutes
+  static const int longBreakTime = 20 * 60;   // 20 minutes
 
   // Colors for each timer mode
   static const Color pomodoroColor = Color(0xFFDB524D);    // Red

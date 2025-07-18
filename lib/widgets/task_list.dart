@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../controllers/task_controller.dart';
-import '../models/task.dart';
 
 class TaskList extends StatelessWidget {
   final TaskController taskController;
