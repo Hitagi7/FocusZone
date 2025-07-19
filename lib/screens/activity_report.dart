@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/theme_manager.dart';
 
 class ReportScreen extends StatefulWidget {
@@ -12,11 +13,30 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
   late TabController _tabController;
   Map<String, Color> _themeColors = {};
 
+  // Activity data
+  int _hoursFocused = 0;
+  int _daysAccessed = 0;
+  int _dayStreak = 0;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.index == 0) {
+        // Refresh data when Summary tab is selected
+        _loadActivityData();
+      }
+    });
     _loadThemeSettings();
+    _loadActivityData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reload activity data when the screen becomes visible
+    _loadActivityData();
   }
 
   @override
@@ -31,6 +51,47 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
       _themeColors = ThemeManager.getThemeColors(currentTheme);
     });
   }
+
+  Future<void> _loadActivityData() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    // Debug: Check all stored values
+    final allKeys = prefs.getKeys();
+    print('All SharedPreferences keys: $allKeys');
+    
+    final minutesFocused = prefs.getInt('hoursFocused') ?? 0;
+    final daysAccessed = prefs.getInt('daysAccessed') ?? 0;
+    final dayStreak = prefs.getInt('dayStreak') ?? 0;
+    
+    print('Raw data from SharedPreferences:');
+    print('hoursFocused: ${prefs.getInt('hoursFocused')}');
+    print('daysAccessed: ${prefs.getInt('daysAccessed')}');
+    print('dayStreak: ${prefs.getInt('dayStreak')}');
+    
+    setState(() {
+      _hoursFocused = minutesFocused;
+      _daysAccessed = daysAccessed;
+      _dayStreak = dayStreak;
+    });
+    print('Activity Data Loaded: $_hoursFocused minutes, $_daysAccessed days, $_dayStreak streak');
+  }
+
+  // Test method to manually update activity data
+  Future<void> _testUpdateActivity() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    // Manually set some test data
+    await prefs.setInt('hoursFocused', 50);
+    await prefs.setInt('daysAccessed', 3);
+    await prefs.setInt('dayStreak', 2);
+    
+    print('Test data set: 50 minutes, 3 days, 2 streak');
+    
+    // Reload the data
+    await _loadActivityData();
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -77,13 +138,17 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
                       ),
                       child: TabBar(
                         controller: _tabController,
-                        indicator: BoxDecoration(
-                          color: const Color(0xFFF0B2B2),
-                          borderRadius: BorderRadius.circular(10.0 * scale),
+                        indicator: UnderlineTabIndicator(
+                          borderSide: BorderSide(
+                            color: _themeColors['primary'] ?? Colors.blue,
+                            width: 3 * scale,
+                          ),
+                          insets: EdgeInsets.symmetric(horizontal: 24 * scale),
                         ),
-                        labelColor: _themeColors['primary'] ?? Colors.white,
+                        labelColor: _themeColors['primary'] ?? Colors.blue,
                         unselectedLabelColor: _themeColors['textSecondary'] ?? Colors.grey[700],
                         labelStyle: TextStyle(fontSize: 14 * scale, fontWeight: FontWeight.bold),
+                        unselectedLabelStyle: TextStyle(fontSize: 14 * scale, fontWeight: FontWeight.normal),
                         tabs: [
                           Tab(text: 'Summary'),
                           Tab(text: 'Detail'),
@@ -125,7 +190,12 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
   }
 
   Widget _buildSummaryTab(double scale) {
-    return SingleChildScrollView(
+    final screenWidth = MediaQuery.of(context).size.width;
+    final horizontalPadding = 4.0 * scale * 2; // left + right
+    final cardSpacing = 12 * scale;
+    final cardWidth = (screenWidth - horizontalPadding - cardSpacing) / 2;
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.0 * scale, horizontal: 4.0 * scale),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -138,27 +208,27 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
             ),
           ),
           _buildLoginMessage(scale),
-          SizedBox(
-            height: 120 * scale,
-            child: GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 10 * scale,
-              crossAxisSpacing: 10 * scale,
-              childAspectRatio: 1.2,
-              children: [
-                _buildSummaryCard(Icons.access_time, 'hours focused', scale),
-                _buildSummaryCard(Icons.calendar_today, 'days accessed', scale),
-              ],
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: _buildSummaryCard(Icons.access_time, 'minutes focused', scale),
+              ),
+              SizedBox(width: cardSpacing),
+              Expanded(
+                child: _buildSummaryCard(Icons.calendar_today, 'days accessed', scale),
+              ),
+            ],
           ),
-          SizedBox(height: 10 * scale),
-          Center(
-            child: SizedBox(
-              width: 140 * scale,
-              child: _buildSummaryCard(Icons.local_fire_department, 'day streak', scale),
-            ),
+          SizedBox(height: 16 * scale),
+          Row(
+            children: [
+              Spacer(),
+              SizedBox(
+                width: cardWidth,
+                child: _buildSummaryCard(Icons.local_fire_department, 'day streak', scale),
+              ),
+              Spacer(),
+            ],
           ),
         ],
       ),
@@ -166,30 +236,51 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
   }
 
   Widget _buildSummaryCard(IconData icon, String label, double scale) {
+    // Determine which value to show based on the label
+    int value;
+    switch (label) {
+      case 'minutes focused':
+        value = _hoursFocused;
+        break;
+      case 'days accessed':
+        value = _daysAccessed;
+        break;
+      case 'day streak':
+        value = _dayStreak;
+        break;
+      default:
+        value = 0;
+    }
+    
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFFCE4E4),
+        color: _themeColors['surface'] ?? Colors.grey[100],
         borderRadius: BorderRadius.circular(10.0 * scale),
+        border: Border.all(
+          color: _themeColors['border'] ?? Colors.grey[300]!,
+          width: 1 * scale,
+        ),
       ),
-      padding: EdgeInsets.all(16.0 * scale),
+      padding: EdgeInsets.all(12.0 * scale),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 30 * scale, color: const Color(0xFFF0B2B2)),
-          SizedBox(height: 6 * scale),
+          Icon(icon, size: 28 * scale, color: _themeColors['primary'] ?? Colors.blue),
+          SizedBox(height: 8 * scale),
           Text(
-            '--',
+            value.toString(),
             style: TextStyle(
-              fontSize: 12 * scale, 
+              fontSize: 14 * scale, 
               fontWeight: FontWeight.bold, 
               color: _themeColors['text'] ?? Colors.black87,
             ),
           ),
+          SizedBox(height: 4 * scale),
           Text(
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 12 * scale, 
+              fontSize: 11 * scale, 
               color: _themeColors['textSecondary'] ?? Colors.black54,
             ),
           ),
@@ -199,171 +290,95 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
   }
 
   Widget _buildDetailTab(double scale) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          'Focus Time Detail',
-          style: TextStyle(
-            fontSize: 18 * scale, 
-            fontWeight: FontWeight.bold,
-            color: _themeColors['text'] ?? Colors.black87,
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8.0 * scale, vertical: 8.0 * scale),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            'Focus Time Detail',
+            style: TextStyle(
+              fontSize: 18 * scale, 
+              fontWeight: FontWeight.bold,
+              color: _themeColors['text'] ?? Colors.black87,
+            ),
           ),
-        ),
-        _buildLoginMessage(scale),
-        Expanded(
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Center(
-                      child: DataTable(
-                        columnSpacing: 16 * scale,
-                        columns: [
-                          DataColumn(label: Text(
-                            'DATE', 
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold, 
-                              fontSize: 13 * scale,
-                              color: _themeColors['text'] ?? Colors.black87,
-                            ),
-                          )),
-                          DataColumn(label: Text(
-                            'PROJECT / TASK', 
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold, 
-                              fontSize: 13 * scale,
-                              color: _themeColors['text'] ?? Colors.black87,
-                            ),
-                          )),
-                          DataColumn(label: Text(
-                            'MINUTES', 
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold, 
-                              fontSize: 13 * scale,
-                              color: _themeColors['text'] ?? Colors.black87,
-                            ),
-                          )),
-                        ],
-                        rows: [
-                          DataRow(cells: [
-                            DataCell(Text(
-                              '2023-10-26', 
-                              style: TextStyle(
-                                fontSize: 12 * scale,
-                                color: _themeColors['text'] ?? Colors.black87,
-                              ),
-                            )),
-                            DataCell(Text(
-                              'Project Alpha', 
-                              style: TextStyle(
-                                fontSize: 12 * scale,
-                                color: _themeColors['text'] ?? Colors.black87,
-                              ),
-                            )),
-                            DataCell(Text(
-                              '60', 
-                              style: TextStyle(
-                                fontSize: 12 * scale,
-                                color: _themeColors['text'] ?? Colors.black87,
-                              ),
-                            )),
-                          ]),
-                          DataRow(cells: [
-                            DataCell(Text(
-                              '2023-10-25', 
-                              style: TextStyle(
-                                fontSize: 12 * scale,
-                                color: _themeColors['text'] ?? Colors.black87,
-                              ),
-                            )),
-                            DataCell(Text(
-                              'Task Beta', 
-                              style: TextStyle(
-                                fontSize: 12 * scale,
-                                color: _themeColors['text'] ?? Colors.black87,
-                              ),
-                            )),
-                            DataCell(Text(
-                              '45', 
-                              style: TextStyle(
-                                fontSize: 12 * scale,
-                                color: _themeColors['text'] ?? Colors.black87,
-                              ),
-                            )),
-                          ]),
-                          DataRow(cells: [
-                            DataCell(Text(
-                              '2023-10-24', 
-                              style: TextStyle(
-                                fontSize: 12 * scale,
-                                color: _themeColors['text'] ?? Colors.black87,
-                              ),
-                            )),
-                            DataCell(Text(
-                              'Meeting Prep', 
-                              style: TextStyle(
-                                fontSize: 12 * scale,
-                                color: _themeColors['text'] ?? Colors.black87,
-                              ),
-                            )),
-                            DataCell(Text(
-                              '30', 
-                              style: TextStyle(
-                                fontSize: 12 * scale,
-                                color: _themeColors['text'] ?? Colors.black87,
-                              ),
-                            )),
-                          ]),
-                        ],
-                      ),
-                    ),
+          _buildLoginMessage(scale),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              columnSpacing: 32 * scale,
+              dataTextStyle: TextStyle(
+                fontSize: 14 * scale,
+                color: _themeColors['text'] ?? Colors.black87,
+              ),
+              headingTextStyle: TextStyle(
+                fontWeight: FontWeight.bold, 
+                fontSize: 15 * scale,
+                color: _themeColors['text'] ?? Colors.black87,
+              ),
+              columns: [
+                DataColumn(label: Text('DATE')),
+                DataColumn(label: Text('PROJECT / TASK')),
+                DataColumn(label: Text('MINUTES')),
+              ],
+              rows: [
+                DataRow(cells: [
+                  DataCell(Text('2023-10-26')),
+                  DataCell(Text('Project Alpha')),
+                  DataCell(Text('60')),
+                ]),
+                DataRow(cells: [
+                  DataCell(Text('2023-10-25')),
+                  DataCell(Text('Task Beta')),
+                  DataCell(Text('45')),
+                ]),
+                DataRow(cells: [
+                  DataCell(Text('2023-10-24')),
+                  DataCell(Text('Meeting Prep')),
+                  DataCell(Text('30')),
+                ]),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 16.0 * scale),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_ios, 
+                    size: 20 * scale,
+                    color: _themeColors['text'] ?? Colors.black87,
+                  ),
+                  onPressed: () {
+                    // Handle previous page
+                  },
+                ),
+                Text(
+                  '1', 
+                  style: TextStyle(
+                    fontSize: 16 * scale, 
+                    fontWeight: FontWeight.bold,
+                    color: _themeColors['text'] ?? Colors.black87,
                   ),
                 ),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: 16.0 * scale),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        Icons.arrow_back_ios, 
-                        size: 20 * scale,
-                        color: _themeColors['text'] ?? Colors.black87,
-                      ),
-                      onPressed: () {
-                        // Handle previous page
-                      },
-                    ),
-                    Text(
-                      '1', 
-                      style: TextStyle(
-                        fontSize: 16 * scale, 
-                        fontWeight: FontWeight.bold,
-                        color: _themeColors['text'] ?? Colors.black87,
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.arrow_forward_ios, 
-                        size: 20 * scale,
-                        color: _themeColors['text'] ?? Colors.black87,
-                      ),
-                      onPressed: () {
-                        // Handle next page
-                      },
-                    ),
-                  ],
+                IconButton(
+                  icon: Icon(
+                    Icons.arrow_forward_ios, 
+                    size: 20 * scale,
+                    color: _themeColors['text'] ?? Colors.black87,
+                  ),
+                  onPressed: () {
+                    // Handle next page
+                  },
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

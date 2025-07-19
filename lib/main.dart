@@ -114,8 +114,14 @@ class _LandingPageState extends State<LandingPage> {
     _pageController = PageController(initialPage: _currentPageIndex);
     _taskController = TaskController();
     
+    // Load user's timer settings
+    _timerController.loadTimerSettings();
+    
     // Load reminder settings
     _timerController.loadReminderSettings();
+    
+    // Check day tracking when app starts
+    _timerController.checkDayTracking();
   }
 
   @override
