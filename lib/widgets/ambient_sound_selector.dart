@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/ambient_sound.dart';
 import '../controllers/audio_controller.dart';
+import '../constants/theme_manager.dart';
 
 class AmbientSoundSelector extends StatefulWidget {
   final AudioController audioController;
@@ -21,6 +22,7 @@ class _AmbientSoundSelectorState extends State<AmbientSoundSelector>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  Map<String, Color> _themeColors = {};
 
   @override
   void initState() {
@@ -38,12 +40,20 @@ class _AmbientSoundSelectorState extends State<AmbientSoundSelector>
     ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOut));
     
     _animationController.forward();
+    _loadThemeSettings();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadThemeSettings() async {
+    final currentTheme = await ThemeManager.getCurrentThemeColor();
+    setState(() {
+      _themeColors = ThemeManager.getThemeColors(currentTheme);
+    });
   }
 
     @override
@@ -55,11 +65,11 @@ class _AmbientSoundSelectorState extends State<AmbientSoundSelector>
         child: Container(
           margin: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E),
+            color: _themeColors['background'] ?? const Color(0xFF1E1E1E),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
+                color: (_themeColors['text'] ?? Colors.black).withValues(alpha: 0.3),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               ),
@@ -72,7 +82,7 @@ class _AmbientSoundSelectorState extends State<AmbientSoundSelector>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF2A2A2A),
+              color: _themeColors['surface'] ?? const Color(0xFF2A2A2A),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
@@ -82,7 +92,7 @@ class _AmbientSoundSelectorState extends State<AmbientSoundSelector>
               children: [
                 Icon(
                   Icons.volume_up,
-                  color: Colors.grey[300],
+                  color: _themeColors['textSecondary'] ?? Colors.grey[300],
                   size: 20,
                 ),
                 const SizedBox(width: 8),
@@ -91,7 +101,7 @@ class _AmbientSoundSelectorState extends State<AmbientSoundSelector>
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey[100],
+                    color: _themeColors['text'] ?? Colors.grey[100],
                     fontFamily: 'Noto Sans Display',
                   ),
                 ),
@@ -100,7 +110,7 @@ class _AmbientSoundSelectorState extends State<AmbientSoundSelector>
                   onPressed: () => Navigator.of(context).pop(),
                   icon: Icon(
                     Icons.close,
-                    color: Colors.grey[400],
+                    color: _themeColors['textSecondary'] ?? Colors.grey[400],
                   ),
                 ),
               ],
@@ -147,23 +157,27 @@ class _AmbientSoundSelectorState extends State<AmbientSoundSelector>
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
-              color: currentIsPlaying ? const Color(0xFF1E3A8A) : const Color(0xFF2A2A2A),
+              color: currentIsPlaying 
+                ? (_themeColors['primary'] ?? const Color(0xFF1E3A8A)).withValues(alpha: 0.2)
+                : (_themeColors['surface'] ?? const Color(0xFF2A2A2A)),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: currentIsPlaying ? Colors.blue[400]! : Colors.grey[600]!,
+                color: currentIsPlaying 
+                  ? (_themeColors['primary'] ?? Colors.blue[400]!)
+                  : (_themeColors['border'] ?? Colors.grey[600]!),
                 width: currentIsPlaying ? 2 : 1,
               ),
               boxShadow: currentIsPlaying
                   ? [
                       BoxShadow(
-                        color: Colors.blue.withValues(alpha: 0.3),
+                        color: (_themeColors['primary'] ?? Colors.blue).withValues(alpha: 0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
                     ]
                   : [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
+                        color: (_themeColors['text'] ?? Colors.black).withValues(alpha: 0.2),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -182,7 +196,9 @@ class _AmbientSoundSelectorState extends State<AmbientSoundSelector>
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: currentIsPlaying ? Colors.blue[200] : Colors.grey[200],
+                    color: currentIsPlaying 
+                      ? (_themeColors['primary'] ?? Colors.blue[200])
+                      : (_themeColors['text'] ?? Colors.grey[200]),
                     fontFamily: 'Noto Sans Display',
                   ),
                   textAlign: TextAlign.center,
@@ -197,7 +213,7 @@ class _AmbientSoundSelectorState extends State<AmbientSoundSelector>
                     children: [
                       Icon(
                         Icons.volume_down,
-                        color: Colors.grey[400],
+                        color: _themeColors['textSecondary'] ?? Colors.grey[400],
                         size: 15,
                       ),
                       SizedBox(width: 4),
@@ -212,8 +228,10 @@ class _AmbientSoundSelectorState extends State<AmbientSoundSelector>
                             onChanged: (value) async {
                               await widget.audioController.setSoundVolume(sound.id, value);
                             },
-                            activeColor: currentIsPlaying ? Colors.blue[400] : Colors.grey[500],
-                            inactiveColor: Colors.grey[700],
+                            activeColor: currentIsPlaying 
+                              ? (_themeColors['primary'] ?? Colors.blue[400])
+                              : (_themeColors['textSecondary'] ?? Colors.grey[500]),
+                            inactiveColor: _themeColors['border'] ?? Colors.grey[700],
                             min: 0.0,
                             max: 1.0,
                           ),
@@ -222,7 +240,7 @@ class _AmbientSoundSelectorState extends State<AmbientSoundSelector>
                       SizedBox(width: 4),
                       Icon(
                         Icons.volume_up,
-                        color: Colors.grey[400],
+                        color: _themeColors['textSecondary'] ?? Colors.grey[400],
                         size: 15,
                       ),
                     ],

@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/timer_mode.dart';
 import '../models/timer_config.dart';
 import '../constants/app_constants.dart';
 import 'audio_controller.dart';
+import '../notification_service.dart';
 
 // Manages the timer state and logic
 class TimerController extends ChangeNotifier {
@@ -22,6 +24,11 @@ class TimerController extends ChangeNotifier {
   set longBreakInterval(int value) {
     _longBreakInterval = value > 0 ? value : 4;
   }
+
+  // Reminder settings
+  String _reminderTime = 'Off';
+  int _reminderMinutes = 5;
+  bool _reminderShown = false;
 
   TimerController({bool autoStartBreaks = false, bool autoStartPomodoros = false})
       : _autoStartBreaks = autoStartBreaks,
@@ -53,17 +60,26 @@ class TimerController extends ChangeNotifier {
     _audioController = audioController;
   }
 
+  // Load reminder settings
+  Future<void> loadReminderSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    _reminderTime = prefs.getString('reminderTime') ?? 'Off';
+    _reminderMinutes = prefs.getInt('reminderMinutes') ?? 5;
+  }
+
   // Start the timer
   void startTimer() {
     _timer?.cancel(); // Always clear any previous timer
     if (_isRunning) return;
 
     _isRunning = true;
+    _reminderShown = false; // Reset reminder flag when starting
     notifyListeners();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_timeLeft > 0) {
         _timeLeft--;
+        _checkReminder(); // Check for reminder
         notifyListeners();
       } else {
         _completeTimer();
@@ -207,6 +223,55 @@ class TimerController extends ChangeNotifier {
     _timeLeft = TimerConfigManager.getConfig(_currentMode).time;
     _isRunning = false;
     notifyListeners();
+  }
+
+  // Check if reminder should be shown
+  void _checkReminder() {
+    if (_reminderTime == 'Off') return; // Don't show reminders if turned off
+    if (_reminderShown) return; // Don't show reminder multiple times
+    
+    int totalTime = TimerConfigManager.getConfig(_currentMode).time;
+    int timeElapsed = totalTime - _timeLeft;
+    
+    if (_reminderTime == 'Last') {
+      // Show reminder in the last X minutes
+      if (_timeLeft <= _reminderMinutes * 60 && _timeLeft > 0) {
+        _showReminderNotification();
+        _reminderShown = true;
+      }
+    } else if (_reminderTime == 'Every') {
+      // Show reminder every X minutes
+      if (timeElapsed > 0 && timeElapsed % (_reminderMinutes * 60) == 0) {
+        _showReminderNotification();
+      }
+    }
+  }
+
+  // Show reminder notification
+  void _showReminderNotification() {
+    String title;
+    String body;
+    
+    switch (_currentMode) {
+      case TimerMode.pomodoro:
+        title = 'Focus Reminder';
+        body = 'Keep going! You\'re doing great with your focus session.';
+        break;
+      case TimerMode.shortBreak:
+        title = 'Break Reminder';
+        body = 'Enjoy your short break! Don\'t forget to stretch.';
+        break;
+      case TimerMode.longBreak:
+        title = 'Long Break Reminder';
+        body = 'Take this time to relax and recharge.';
+        break;
+    }
+    
+    NotificationService.showNotification(
+      title: title,
+      body: body,
+      id: 1, // Use different ID for reminders
+    );
   }
 
   @override

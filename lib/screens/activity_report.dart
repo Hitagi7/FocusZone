@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/theme_manager.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -9,17 +10,26 @@ class ReportScreen extends StatefulWidget {
 
 class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  Map<String, Color> _themeColors = {};
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _loadThemeSettings();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadThemeSettings() async {
+    final currentTheme = await ThemeManager.getCurrentThemeColor();
+    setState(() {
+      _themeColors = ThemeManager.getThemeColors(currentTheme);
+    });
   }
 
   @override
@@ -41,6 +51,7 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
               width: dialogWidth,
               height: dialogHeight,
               padding: EdgeInsets.all(16.0 * scale),
+              color: _themeColors['background'] ?? Colors.white,
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -48,7 +59,11 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
                     Align(
                       alignment: Alignment.topRight,
                       child: IconButton(
-                        icon: Icon(Icons.close, size: 24 * scale),
+                        icon: Icon(
+                          Icons.close, 
+                          size: 24 * scale,
+                          color: _themeColors['text'] ?? Colors.black87,
+                        ),
                         onPressed: () {
                           Navigator.of(context).pop();
                         },
@@ -57,7 +72,7 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
                     SizedBox(height: 8 * scale),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.grey[200],
+                        color: _themeColors['inputBackground'] ?? Colors.grey[200],
                         borderRadius: BorderRadius.circular(10.0 * scale),
                       ),
                       child: TabBar(
@@ -66,8 +81,8 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
                           color: const Color(0xFFF0B2B2),
                           borderRadius: BorderRadius.circular(10.0 * scale),
                         ),
-                        labelColor: Colors.white,
-                        unselectedLabelColor: Colors.grey[700],
+                        labelColor: _themeColors['primary'] ?? Colors.white,
+                        unselectedLabelColor: _themeColors['textSecondary'] ?? Colors.grey[700],
                         labelStyle: TextStyle(fontSize: 14 * scale, fontWeight: FontWeight.bold),
                         tabs: [
                           Tab(text: 'Summary'),
@@ -101,7 +116,10 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
       padding: EdgeInsets.symmetric(vertical: 16.0 * scale),
       child: Text(
         ' ',
-        style: TextStyle(fontSize: 14 * scale, color: Colors.grey),
+        style: TextStyle(
+          fontSize: 14 * scale, 
+          color: _themeColors['textSecondary'] ?? Colors.grey,
+        ),
       ),
     );
   }
@@ -113,7 +131,11 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
         children: [
           Text(
             'Activity Summary',
-            style: TextStyle(fontSize: 20 * scale, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 20 * scale, 
+              fontWeight: FontWeight.bold,
+              color: _themeColors['text'] ?? Colors.black87,
+            ),
           ),
           _buildLoginMessage(scale),
           SizedBox(
@@ -157,12 +179,19 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
           SizedBox(height: 6 * scale),
           Text(
             '--',
-            style: TextStyle(fontSize: 12 * scale, fontWeight: FontWeight.bold, color: Colors.black87),
+            style: TextStyle(
+              fontSize: 12 * scale, 
+              fontWeight: FontWeight.bold, 
+              color: _themeColors['text'] ?? Colors.black87,
+            ),
           ),
           Text(
             label,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12 * scale, color: Colors.black54),
+            style: TextStyle(
+              fontSize: 12 * scale, 
+              color: _themeColors['textSecondary'] ?? Colors.black54,
+            ),
           ),
         ],
       ),
@@ -175,7 +204,11 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
       children: [
         Text(
           'Focus Time Detail',
-          style: TextStyle(fontSize: 18 * scale, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 18 * scale, 
+            fontWeight: FontWeight.bold,
+            color: _themeColors['text'] ?? Colors.black87,
+          ),
         ),
         _buildLoginMessage(scale),
         Expanded(
@@ -190,25 +223,100 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
                       child: DataTable(
                         columnSpacing: 16 * scale,
                         columns: [
-                          DataColumn(label: Text('DATE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13 * scale))),
-                          DataColumn(label: Text('PROJECT / TASK', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13 * scale))),
-                          DataColumn(label: Text('MINUTES', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13 * scale))),
+                          DataColumn(label: Text(
+                            'DATE', 
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold, 
+                              fontSize: 13 * scale,
+                              color: _themeColors['text'] ?? Colors.black87,
+                            ),
+                          )),
+                          DataColumn(label: Text(
+                            'PROJECT / TASK', 
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold, 
+                              fontSize: 13 * scale,
+                              color: _themeColors['text'] ?? Colors.black87,
+                            ),
+                          )),
+                          DataColumn(label: Text(
+                            'MINUTES', 
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold, 
+                              fontSize: 13 * scale,
+                              color: _themeColors['text'] ?? Colors.black87,
+                            ),
+                          )),
                         ],
                         rows: [
                           DataRow(cells: [
-                            DataCell(Text('2023-10-26', style: TextStyle(fontSize: 12 * scale))),
-                            DataCell(Text('Project Alpha', style: TextStyle(fontSize: 12 * scale))),
-                            DataCell(Text('60', style: TextStyle(fontSize: 12 * scale))),
+                            DataCell(Text(
+                              '2023-10-26', 
+                              style: TextStyle(
+                                fontSize: 12 * scale,
+                                color: _themeColors['text'] ?? Colors.black87,
+                              ),
+                            )),
+                            DataCell(Text(
+                              'Project Alpha', 
+                              style: TextStyle(
+                                fontSize: 12 * scale,
+                                color: _themeColors['text'] ?? Colors.black87,
+                              ),
+                            )),
+                            DataCell(Text(
+                              '60', 
+                              style: TextStyle(
+                                fontSize: 12 * scale,
+                                color: _themeColors['text'] ?? Colors.black87,
+                              ),
+                            )),
                           ]),
                           DataRow(cells: [
-                            DataCell(Text('2023-10-25', style: TextStyle(fontSize: 12 * scale))),
-                            DataCell(Text('Task Beta', style: TextStyle(fontSize: 12 * scale))),
-                            DataCell(Text('45', style: TextStyle(fontSize: 12 * scale))),
+                            DataCell(Text(
+                              '2023-10-25', 
+                              style: TextStyle(
+                                fontSize: 12 * scale,
+                                color: _themeColors['text'] ?? Colors.black87,
+                              ),
+                            )),
+                            DataCell(Text(
+                              'Task Beta', 
+                              style: TextStyle(
+                                fontSize: 12 * scale,
+                                color: _themeColors['text'] ?? Colors.black87,
+                              ),
+                            )),
+                            DataCell(Text(
+                              '45', 
+                              style: TextStyle(
+                                fontSize: 12 * scale,
+                                color: _themeColors['text'] ?? Colors.black87,
+                              ),
+                            )),
                           ]),
                           DataRow(cells: [
-                            DataCell(Text('2023-10-24', style: TextStyle(fontSize: 12 * scale))),
-                            DataCell(Text('Meeting Prep', style: TextStyle(fontSize: 12 * scale))),
-                            DataCell(Text('30', style: TextStyle(fontSize: 12 * scale))),
+                            DataCell(Text(
+                              '2023-10-24', 
+                              style: TextStyle(
+                                fontSize: 12 * scale,
+                                color: _themeColors['text'] ?? Colors.black87,
+                              ),
+                            )),
+                            DataCell(Text(
+                              'Meeting Prep', 
+                              style: TextStyle(
+                                fontSize: 12 * scale,
+                                color: _themeColors['text'] ?? Colors.black87,
+                              ),
+                            )),
+                            DataCell(Text(
+                              '30', 
+                              style: TextStyle(
+                                fontSize: 12 * scale,
+                                color: _themeColors['text'] ?? Colors.black87,
+                              ),
+                            )),
                           ]),
                         ],
                       ),
@@ -222,14 +330,29 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     IconButton(
-                      icon: Icon(Icons.arrow_back_ios, size: 20 * scale),
+                      icon: Icon(
+                        Icons.arrow_back_ios, 
+                        size: 20 * scale,
+                        color: _themeColors['text'] ?? Colors.black87,
+                      ),
                       onPressed: () {
                         // Handle previous page
                       },
                     ),
-                    Text('1', style: TextStyle(fontSize: 16 * scale, fontWeight: FontWeight.bold)),
+                    Text(
+                      '1', 
+                      style: TextStyle(
+                        fontSize: 16 * scale, 
+                        fontWeight: FontWeight.bold,
+                        color: _themeColors['text'] ?? Colors.black87,
+                      ),
+                    ),
                     IconButton(
-                      icon: Icon(Icons.arrow_forward_ios, size: 20 * scale),
+                      icon: Icon(
+                        Icons.arrow_forward_ios, 
+                        size: 20 * scale,
+                        color: _themeColors['text'] ?? Colors.black87,
+                      ),
                       onPressed: () {
                         // Handle next page
                       },

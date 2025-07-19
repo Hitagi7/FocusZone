@@ -6,7 +6,6 @@ import 'models/timer_config.dart';
 import 'constants/app_constants.dart';
 import 'widgets/app_header.dart';
 import 'widgets/timer_display.dart';
-import 'widgets/control_buttons.dart';
 import 'widgets/round_counter.dart';
 import 'widgets/sound_button.dart';
 import 'controllers/timer_controller.dart';
@@ -114,6 +113,9 @@ class _LandingPageState extends State<LandingPage> {
     _timerController.addListener(_onModeChanged);
     _pageController = PageController(initialPage: _currentPageIndex);
     _taskController = TaskController();
+    
+    // Load reminder settings
+    _timerController.loadReminderSettings();
   }
 
   @override
@@ -528,7 +530,7 @@ class _LandingPageState extends State<LandingPage> {
                       round: _timerController.round,
                     ),
                   ),
-                  const SizedBox(height: 0),
+                  const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     constraints: const BoxConstraints(maxWidth: 300),

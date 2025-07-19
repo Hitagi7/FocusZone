@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/timer_config.dart';
 import '../main.dart';
+import '../constants/theme_manager.dart';
 
 class UserSettingsScreen extends StatefulWidget {
   const UserSettingsScreen({super.key});
@@ -21,12 +22,14 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
   int _longBreakInterval = 4;
 
   // Theme settings
-  Color _selectedThemeColor = Colors.red; // Default selected color
-  String _hourFormat = '24-hour';
-  bool _darkModeWhenRunning = false;
+  Color _selectedThemeColor = Colors.black; // Default selected color (dark mode)
+  Map<String, Color> _themeColors = {};
+
+  // Timer format settings
+  String _timerFormat = 'minutes';
 
   // Notification settings
-  String _reminderTime = 'Last';
+  String _reminderTime = 'Off';
   final TextEditingController _reminderMinutesController = TextEditingController(text: '5');
 
   @override
@@ -35,6 +38,9 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
     _loadTimerSettings();
     _loadAutoStartSettings();
     _loadLongBreakInterval();
+    _loadThemeSettings();
+    _loadTimerFormat();
+    _loadReminderSettings();
   }
 
   Future<void> _loadTimerSettings() async {
@@ -77,12 +83,47 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
     landingPageKey.currentState?.timerController.longBreakInterval = _longBreakInterval;
   }
 
+  Future<void> _loadThemeSettings() async {
+    final currentTheme = await ThemeManager.getCurrentThemeColor();
+    setState(() {
+      _selectedThemeColor = currentTheme;
+      _themeColors = ThemeManager.getThemeColors(currentTheme);
+    });
+  }
+
+  Future<void> _loadTimerFormat() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _timerFormat = prefs.getString('timerFormat') ?? 'minutes';
+    });
+  }
+
   Future<void> _saveLongBreakInterval() async {
     final prefs = await SharedPreferences.getInstance();
     final interval = int.tryParse(_longBreakIntervalController.text) ?? 4;
     await prefs.setInt('longBreakInterval', interval);
     _longBreakInterval = interval;
     landingPageKey.currentState?.timerController.longBreakInterval = interval;
+  }
+
+  Future<void> _saveTimerFormat() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('timerFormat', _timerFormat);
+  }
+
+  Future<void> _loadReminderSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _reminderTime = prefs.getString('reminderTime') ?? 'Off';
+      _reminderMinutesController.text = (prefs.getInt('reminderMinutes') ?? 5).toString();
+    });
+  }
+
+  Future<void> _saveReminderSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('reminderTime', _reminderTime);
+    final minutes = int.tryParse(_reminderMinutesController.text) ?? 5;
+    await prefs.setInt('reminderMinutes', minutes);
   }
 
   Future<void> _saveTimerSettings() async {
@@ -108,6 +149,10 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
     await _saveAutoStartSettings();
     // Save long break interval as well
     await _saveLongBreakInterval();
+    // Save timer format as well
+    await _saveTimerFormat();
+    // Save reminder settings as well
+    await _saveReminderSettings();
   }
 
   void _showInvalidDurationDialog() {
@@ -153,6 +198,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
             width: dialogWidth,
             height: dialogHeight,
             padding: EdgeInsets.all(16.0 * scale),
+            color: _themeColors['background'] ?? Colors.white,
             child: Column(
               children: [
                 // Header with title and close button
@@ -163,10 +209,18 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                     children: [
                       Text(
                         'SETTING',
-                        style: TextStyle(fontSize: 18 * scale, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 18 * scale, 
+                          fontWeight: FontWeight.bold,
+                          color: _themeColors['text'] ?? Colors.black87,
+                        ),
                       ),
                       IconButton(
-                        icon: Icon(Icons.close, size: 24 * scale),
+                        icon: Icon(
+                          Icons.close, 
+                          size: 24 * scale,
+                          color: _themeColors['text'] ?? Colors.black87,
+                        ),
                         onPressed: () {
                           Navigator.of(context).pop(); // Close the dialog
                         },
@@ -174,7 +228,10 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                     ],
                   ),
                 ),
-                Divider(thickness: 1 * scale), // Separator below header
+                Divider(
+                  thickness: 1 * scale,
+                  color: _themeColors['border'] ?? Colors.grey[300],
+                ), // Separator below header
                 Expanded(
                   child: SingleChildScrollView(
                     child: Padding(
@@ -201,28 +258,33 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                             landingPageKey.currentState?.timerController.autoStartPomodoros = value;
                           }, scale),
                           _buildTextInputSetting('Long Break interval', _longBreakIntervalController, scale: scale),
+                          _buildDropdownSetting('Format', _timerFormat, ['minutes', 'hours'], (String? newValue) async {
+                            setState(() {
+                              _timerFormat = newValue!;
+                            });
+                            await _saveTimerFormat();
+                            // Force rebuild of timer display to update format
+                            landingPageKey.currentState?.setState(() {});
+                          }, scale),
                           SizedBox(height: 20 * scale),
-                          Divider(thickness: 1 * scale),
+                          Divider(
+                            thickness: 1 * scale,
+                            color: _themeColors['border'] ?? Colors.grey[300],
+                          ),
                           _buildSectionHeader(Icons.edit, 'THEME', scale),
                           _buildColorThemeSetting(scale),
-                          _buildDropdownSetting('Hour Format', _hourFormat, ['24-hour', '12-hour'], (String? newValue) {
-                            setState(() {
-                              _hourFormat = newValue!;
-                            });
-                          }, scale),
-                          _buildToggleSetting('Dark Mode when running', _darkModeWhenRunning, (bool value) {
-                            setState(() {
-                              _darkModeWhenRunning = value;
-                            });
-                          }, scale),
-                          _buildSmallWindowSetting(scale),
                           SizedBox(height: 20 * scale),
-                          Divider(thickness: 1 * scale),
+                          Divider(
+                            thickness: 1 * scale,
+                            color: _themeColors['border'] ?? Colors.grey[300],
+                          ),
                           _buildSectionHeader(Icons.notifications, 'NOTIFICATION', scale),
                           _buildReminderSetting(scale),
-                          _buildMobileAlarmSetting(scale),
                           SizedBox(height: 20 * scale),
-                          Divider(thickness: 1 * scale),
+                          Divider(
+                            thickness: 1 * scale,
+                            color: _themeColors['border'] ?? Colors.grey[300],
+                          ),
                           Align(
                             alignment: Alignment.centerRight,
                             child: ElevatedButton(
@@ -231,14 +293,20 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                                 Navigator.of(context).pop(); // Close settings
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey[800],
-                                foregroundColor: Colors.white,
+                                backgroundColor: _themeColors['buttonBackground'] ?? Colors.grey[800],
+                                foregroundColor: _themeColors['primary'] ?? Colors.white,
                                 padding: EdgeInsets.symmetric(horizontal: 24 * scale, vertical: 12 * scale),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8 * scale),
                                 ),
                               ),
-                              child: Text('OK', style: TextStyle(fontSize: 16 * scale)),
+                              child: Text(
+                                'OK', 
+                                style: TextStyle(
+                                  fontSize: 16 * scale,
+                                  color: _themeColors['primary'] ?? Colors.white,
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -259,11 +327,15 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
       padding: EdgeInsets.symmetric(vertical: 8.0 * scale),
       child: Row(
         children: [
-          Icon(icon, size: 20 * scale, color: Colors.grey[700]),
+          Icon(icon, size: 20 * scale, color: _themeColors['textSecondary'] ?? Colors.grey[700]),
           SizedBox(width: 8 * scale),
           Text(
             title,
-            style: TextStyle(fontSize: 16 * scale, fontWeight: FontWeight.bold, color: Colors.grey[700]),
+            style: TextStyle(
+              fontSize: 16 * scale, 
+              fontWeight: FontWeight.bold, 
+              color: _themeColors['textSecondary'] ?? Colors.grey[700]
+            ),
           ),
         ],
       ),
@@ -289,7 +361,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: 14 * scale, color: Colors.black87),
+          style: TextStyle(fontSize: 14 * scale, color: _themeColors['text'] ?? Colors.black87),
         ),
         SizedBox(height: 4 * scale),
         TextField(
@@ -301,11 +373,15 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
               borderSide: BorderSide.none,
             ),
             filled: true,
-            fillColor: Colors.grey[200],
+            fillColor: _themeColors['inputBackground'] ?? Colors.grey[200],
             contentPadding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 8 * scale),
           ),
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16 * scale, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 16 * scale, 
+            fontWeight: FontWeight.bold,
+            color: _themeColors['text'] ?? Colors.black87,
+          ),
         ),
       ],
     );
@@ -317,13 +393,32 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 16 * scale)),
+          Text(
+            label, 
+            style: TextStyle(
+              fontSize: 16 * scale,
+              color: _themeColors['text'] ?? Colors.black87,
+            ),
+          ),
           Transform.scale(
             scale: scale.clamp(0.8, 1.2),
             child: Switch(
               value: value,
               onChanged: onChanged,
-              activeColor: Colors.red,
+              activeColor: _selectedThemeColor == ThemeManager.lightMode 
+                ? Colors.green[600]! 
+                : _themeColors['primary'] ?? Colors.white,
+              activeTrackColor: _selectedThemeColor == ThemeManager.semiDarkMode 
+                ? Colors.blue[300]! 
+                : _selectedThemeColor == ThemeManager.lightMode
+                  ? Colors.green[200]!
+                  : _selectedThemeColor.withValues(alpha: 0.3),
+              inactiveThumbColor: _selectedThemeColor == ThemeManager.lightMode 
+                ? Colors.grey[500]! 
+                : _themeColors['textSecondary'] ?? Colors.grey[400],
+              inactiveTrackColor: _selectedThemeColor == ThemeManager.lightMode 
+                ? Colors.grey[400]! 
+                : _themeColors['border'] ?? Colors.grey[600],
             ),
           ),
         ],
@@ -339,11 +434,21 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
         children: [
           Row(
             children: [
-              Text(label, style: TextStyle(fontSize: 16 * scale)),
+              Text(
+                label, 
+                style: TextStyle(
+                  fontSize: 16 * scale,
+                  color: _themeColors['text'] ?? Colors.black87,
+                ),
+              ),
               if (showInfo)
                 Padding(
                   padding: EdgeInsets.only(left: 4.0 * scale),
-                  child: Icon(Icons.info_outline, size: 16 * scale, color: Colors.grey),
+                  child: Icon(
+                    Icons.info_outline, 
+                    size: 16 * scale, 
+                    color: _themeColors['textSecondary'] ?? Colors.grey,
+                  ),
                 ),
             ],
           ),
@@ -358,11 +463,14 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: Colors.grey[200],
+                fillColor: _themeColors['inputBackground'] ?? Colors.grey[200],
                 contentPadding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 8 * scale),
               ),
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16 * scale),
+              style: TextStyle(
+                fontSize: 16 * scale,
+                color: _themeColors['text'] ?? Colors.black87,
+              ),
             ),
           ),
         ],
@@ -376,25 +484,45 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 16 * scale)),
+          Text(
+            label, 
+            style: TextStyle(
+              fontSize: 16 * scale,
+              color: _themeColors['text'] ?? Colors.black87,
+            ),
+          ),
           Container(
             padding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 4 * scale),
             decoration: BoxDecoration(
-              color: Colors.grey[200],
+              color: _themeColors['inputBackground'] ?? Colors.grey[200],
               borderRadius: BorderRadius.circular(8 * scale),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: value,
                 onChanged: onChanged,
+                dropdownColor: _themeColors['surface'] ?? Colors.grey[100],
                 items: items.map<DropdownMenuItem<String>>((String item) {
                   return DropdownMenuItem<String>(
                     value: item,
-                    child: Text(item),
+                    child: Text(
+                      item,
+                      style: TextStyle(
+                        color: _themeColors['text'] ?? Colors.black87,
+                        fontSize: 16 * scale,
+                      ),
+                    ),
                   );
                 }).toList(),
-                style: TextStyle(fontSize: 16 * scale, color: Colors.black87),
-                icon: Icon(Icons.arrow_drop_down, color: Colors.grey, size: 24 * scale),
+                style: TextStyle(
+                  fontSize: 16 * scale, 
+                  color: _themeColors['text'] ?? Colors.black87,
+                ),
+                icon: Icon(
+                  Icons.arrow_drop_down, 
+                  color: _themeColors['textSecondary'] ?? Colors.grey, 
+                  size: 24 * scale,
+                ),
               ),
             ),
           ),
@@ -457,12 +585,18 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('Color Themes', style: TextStyle(fontSize: 16 * scale)),
+          Text(
+            'Color Themes', 
+            style: TextStyle(
+              fontSize: 16 * scale,
+              color: _themeColors['text'] ?? Colors.black87,
+            ),
+          ),
           Row(
             children: [
-              _buildColorCircle(Colors.red, _selectedThemeColor == Colors.red, scale),
-              _buildColorCircle(Colors.teal, _selectedThemeColor == Colors.teal, scale),
-              _buildColorCircle(Colors.blue, _selectedThemeColor == Colors.blue, scale),
+              _buildColorCircle(ThemeManager.darkMode, _selectedThemeColor.value == ThemeManager.darkMode.value, scale),
+              _buildColorCircle(ThemeManager.semiDarkMode, _selectedThemeColor.value == ThemeManager.semiDarkMode.value, scale),
+              _buildColorCircle(ThemeManager.lightMode, _selectedThemeColor.value == ThemeManager.lightMode.value, scale),
             ],
           ),
         ],
@@ -472,10 +606,12 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
 
   Widget _buildColorCircle(Color color, bool isSelected, double scale) {
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         setState(() {
           _selectedThemeColor = color;
+          _themeColors = ThemeManager.getThemeColors(color);
         });
+        await ThemeManager.saveThemeColor(color);
       },
       child: Container(
         width: 30 * scale,
@@ -490,30 +626,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
     );
   }
 
-  Widget _buildSmallWindowSetting(double scale) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.0 * scale),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('Small Window', style: TextStyle(fontSize: 16 * scale)),
-          OutlinedButton.icon(
-            onPressed: () {
-              // Handle "Open" action for small window
-            },
-            icon: Icon(Icons.open_in_new, size: 18 * scale),
-            label: Text('Open', style: TextStyle(fontSize: 14 * scale)),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.black87,
-              side: BorderSide(color: Colors.grey),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8 * scale)),
-              padding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 4 * scale),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildReminderSetting(double scale) {
     return Padding(
@@ -521,55 +634,87 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('Reminder', style: TextStyle(fontSize: 16 * scale)),
+          Text(
+            'Reminder', 
+            style: TextStyle(
+              fontSize: 16 * scale,
+              color: _themeColors['text'] ?? Colors.black87,
+            ),
+          ),
           Row(
             children: [
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 4 * scale),
                 decoration: BoxDecoration(
-                  color: Colors.grey[200],
+                  color: _themeColors['inputBackground'] ?? Colors.grey[200],
                   borderRadius: BorderRadius.circular(8 * scale),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _reminderTime,
-                    onChanged: (String? newValue) {
+                    onChanged: (String? newValue) async {
                       setState(() {
                         _reminderTime = newValue!;
                       });
+                      await _saveReminderSettings();
                     },
-                    items: <String>['Last', 'Every'].map<DropdownMenuItem<String>>((String value) {
+                    dropdownColor: _themeColors['surface'] ?? Colors.grey[100],
+                    items: <String>['Off', 'Last', 'Every'].map<DropdownMenuItem<String>>((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
-                        child: Text(value),
+                        child: Text(
+                          value,
+                          style: TextStyle(
+                            color: _themeColors['text'] ?? Colors.black87,
+                            fontSize: 16 * scale,
+                          ),
+                        ),
                       );
                     }).toList(),
-                    style: TextStyle(fontSize: 16 * scale, color: Colors.black87),
-                    icon: Icon(Icons.arrow_drop_down, color: Colors.grey, size: 24 * scale),
-                  ),
-                ),
-              ),
-              SizedBox(width: 8 * scale),
-              SizedBox(
-                width: 60 * scale,
-                child: TextField(
-                  controller: _reminderMinutesController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8 * scale),
-                      borderSide: BorderSide.none,
+                    style: TextStyle(
+                      fontSize: 16 * scale, 
+                      color: _themeColors['text'] ?? Colors.black87,
                     ),
-                    filled: true,
-                    fillColor: Colors.grey[200],
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 8 * scale),
+                    icon: Icon(
+                      Icons.arrow_drop_down, 
+                      color: _themeColors['textSecondary'] ?? Colors.grey, 
+                      size: 24 * scale,
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16 * scale),
                 ),
               ),
-              SizedBox(width: 8 * scale),
-              Text('min', style: TextStyle(fontSize: 16 * scale)),
+              if (_reminderTime != 'Off') ...[
+                SizedBox(width: 8 * scale),
+                SizedBox(
+                  width: 60 * scale,
+                  child: TextField(
+                    controller: _reminderMinutesController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8 * scale),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: _themeColors['inputBackground'] ?? Colors.grey[200],
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 8 * scale),
+                    ),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16 * scale,
+                      color: _themeColors['text'] ?? Colors.black87,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 8 * scale),
+                Text(
+                  'min', 
+                  style: TextStyle(
+                    fontSize: 16 * scale,
+                    color: _themeColors['text'] ?? Colors.black87,
+                  ),
+                ),
+              ],
             ],
           ),
         ],
@@ -577,29 +722,5 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
     );
   }
 
-  Widget _buildMobileAlarmSetting(double scale) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.0 * scale),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Text('Mobile Alarm', style: TextStyle(fontSize: 16 * scale)),
-              Padding(
-                padding: EdgeInsets.only(left: 4.0 * scale),
-                child: Icon(Icons.info_outline, size: 16 * scale, color: Colors.grey),
-              ),
-            ],
-          ),
-          TextButton(
-            onPressed: () {
-              // Handle "Add this device" action
-            },
-            child: Text('+ Add this device', style: TextStyle(color: Colors.blue, fontSize: 14 * scale)),
-          ),
-        ],
-      ),
-    );
-  }
+
 }
