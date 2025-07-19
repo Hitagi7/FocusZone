@@ -13,8 +13,8 @@ class TaskList extends StatelessWidget {
         final tasks = taskController.tasks;
         return Container(
           constraints: BoxConstraints(
-            maxHeight: 120.0, // Always show space for 2 tasks
-            minHeight: 120.0, // Always show space for 2 tasks
+            maxHeight: 100.0, // Reduced height for better fit
+            minHeight: 100.0, // Reduced height for better fit
           ),
           padding: const EdgeInsets.symmetric(vertical: 2),
           child: tasks.isEmpty
@@ -61,6 +61,13 @@ class TaskList extends StatelessWidget {
                           decorationThickness: task.isCompleted ? 2.0 : null,
                         ),
                       ),
+                      subtitle: task.minutesSpent > 0 ? Text(
+                        '${task.minutesSpent} minutes spent',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ) : null,
                       trailing: IconButton(
                         icon: Icon(Icons.close, color: Colors.redAccent),
                         onPressed: () => taskController.removeTask(index),

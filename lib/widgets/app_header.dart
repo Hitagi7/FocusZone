@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
 import '../screens/user_settings.dart';
 import '../screens/activity_report.dart';
+import '../controllers/task_controller.dart';
 
 // App header with logo, title, and action buttons
 class AppHeader extends StatelessWidget {
-  const AppHeader({super.key});
+  final TaskController taskController;
+  
+  const AppHeader({super.key, required this.taskController});
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +100,7 @@ class AppHeader extends StatelessWidget {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext _) {
-        return const ReportScreen();
+        return ReportScreen(taskController: taskController);
       },
     );
   }

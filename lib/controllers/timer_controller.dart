@@ -7,6 +7,7 @@ import '../models/timer_config.dart';
 import '../constants/app_constants.dart';
 import 'audio_controller.dart';
 import '../notification_service.dart';
+import 'task_controller.dart';
 
 // Manages the timer state and logic
 class TimerController extends ChangeNotifier {
@@ -16,6 +17,7 @@ class TimerController extends ChangeNotifier {
   int _timeLeft = AppConstants.pomodoroTime;
   int _round = 1;
   AudioController? _audioController;
+  TaskController? _taskController;
 
   bool _autoStartBreaks;
   bool _autoStartPomodoros;
@@ -62,6 +64,11 @@ class TimerController extends ChangeNotifier {
   // Set audio controller reference
   void setAudioController(AudioController audioController) {
     _audioController = audioController;
+  }
+
+  // Set task controller reference
+  void setTaskController(TaskController taskController) {
+    _taskController = taskController;
   }
 
   // Load reminder settings
@@ -195,6 +202,21 @@ class TimerController extends ChangeNotifier {
         // Force a reload to verify the data was saved
         final verifyMinutes = prefs.getInt('hoursFocused') ?? 0;
         print('Verification - minutes focused after save: $verifyMinutes');
+        
+        // Add minutes to the current active task if this is a Pomodoro session
+        if (_currentMode == TimerMode.pomodoro && _taskController != null) {
+          final taskIndex = _taskController!.getFirstUncompletedTaskIndex();
+          print('Task controller found: ${_taskController != null}');
+          print('First uncompleted task index: $taskIndex');
+          if (taskIndex != null) {
+            _taskController!.addMinutesToTask(taskIndex, minutesUsed);
+            print('Added $minutesUsed minutes to task at index $taskIndex');
+          } else {
+            print('No uncompleted tasks found to add time to');
+          }
+        } else {
+          print('Not adding to task - Mode: $_currentMode, TaskController: ${_taskController != null}');
+        }
       } else {
         print('No minutes to add (minutesUsed: $minutesUsed)');
       }
@@ -247,10 +269,10 @@ class TimerController extends ChangeNotifier {
     _timer?.cancel();
     _isRunning = false;
     
-    // Store current tracking state before adding time
-    final wasTracking = _isTrackingSession;
-    final sessionStart = _sessionStartTime;
-    final timeLeft = _timeLeft;
+    // Store current tracking state before adding time (for potential future use)
+    // final wasTracking = _isTrackingSession;
+    // final sessionStart = _sessionStartTime;
+    // final timeLeft = _timeLeft;
     
     // Add time used for all timer modes when skipping
     print('${_currentMode.toString()} skipped, adding time used...');

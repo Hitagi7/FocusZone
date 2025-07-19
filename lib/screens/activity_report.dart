@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/theme_manager.dart';
+import '../controllers/task_controller.dart';
 
 class ReportScreen extends StatefulWidget {
-  const ReportScreen({super.key});
+  final TaskController taskController;
+  
+  const ReportScreen({super.key, required this.taskController});
 
   @override
   State<ReportScreen> createState() => _ReportScreenState();
@@ -30,6 +33,15 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
     });
     _loadThemeSettings();
     _loadActivityData();
+    
+    // Listen to task changes
+    widget.taskController.addListener(() {
+      if (mounted) {
+        setState(() {
+          // Trigger rebuild when tasks change
+        });
+      }
+    });
   }
 
   @override
@@ -42,6 +54,7 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
   @override
   void dispose() {
     _tabController.dispose();
+    widget.taskController.removeListener(() {});
     super.dispose();
   }
 
@@ -76,20 +89,7 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
     print('Activity Data Loaded: $_hoursFocused minutes, $_daysAccessed days, $_dayStreak streak');
   }
 
-  // Test method to manually update activity data
-  Future<void> _testUpdateActivity() async {
-    final prefs = await SharedPreferences.getInstance();
-    
-    // Manually set some test data
-    await prefs.setInt('hoursFocused', 50);
-    await prefs.setInt('daysAccessed', 3);
-    await prefs.setInt('dayStreak', 2);
-    
-    print('Test data set: 50 minutes, 3 days, 2 streak');
-    
-    // Reload the data
-    await _loadActivityData();
-  }
+
 
 
 
@@ -290,6 +290,8 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
   }
 
   Widget _buildDetailTab(double scale) {
+    final tasks = widget.taskController.allTasksSorted;
+    
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 8.0 * scale, vertical: 8.0 * scale),
       child: Column(
@@ -304,79 +306,49 @@ class _ReportScreenState extends State<ReportScreen> with SingleTickerProviderSt
             ),
           ),
           _buildLoginMessage(scale),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              columnSpacing: 32 * scale,
-              dataTextStyle: TextStyle(
-                fontSize: 14 * scale,
-                color: _themeColors['text'] ?? Colors.black87,
+          if (tasks.isEmpty)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 32.0 * scale),
+              child: Text(
+                'No tasks added yet. Add tasks from the main screen!',
+                style: TextStyle(
+                  fontSize: 14 * scale,
+                  color: _themeColors['textSecondary'] ?? Colors.grey,
+                ),
+                textAlign: TextAlign.center,
               ),
-              headingTextStyle: TextStyle(
-                fontWeight: FontWeight.bold, 
-                fontSize: 15 * scale,
-                color: _themeColors['text'] ?? Colors.black87,
+            )
+          else
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                columnSpacing: 32 * scale,
+                dataTextStyle: TextStyle(
+                  fontSize: 14 * scale,
+                  color: _themeColors['text'] ?? Colors.black87,
+                ),
+                headingTextStyle: TextStyle(
+                  fontWeight: FontWeight.bold, 
+                  fontSize: 15 * scale,
+                  color: _themeColors['text'] ?? Colors.black87,
+                ),
+                columns: [
+                  DataColumn(label: Text('DATE')),
+                  DataColumn(label: Text('TASK NAME')),
+                  DataColumn(label: Text('MINUTES')),
+                ],
+                rows: tasks.map((task) {
+                  final date = task.createdAt;
+                  final dateString = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+                  
+                  return DataRow(cells: [
+                    DataCell(Text(dateString)),
+                    DataCell(Text(task.title)),
+                    DataCell(Text(task.minutesSpent.toString())),
+                  ]);
+                }).toList(),
               ),
-              columns: [
-                DataColumn(label: Text('DATE')),
-                DataColumn(label: Text('PROJECT / TASK')),
-                DataColumn(label: Text('MINUTES')),
-              ],
-              rows: [
-                DataRow(cells: [
-                  DataCell(Text('2023-10-26')),
-                  DataCell(Text('Project Alpha')),
-                  DataCell(Text('60')),
-                ]),
-                DataRow(cells: [
-                  DataCell(Text('2023-10-25')),
-                  DataCell(Text('Task Beta')),
-                  DataCell(Text('45')),
-                ]),
-                DataRow(cells: [
-                  DataCell(Text('2023-10-24')),
-                  DataCell(Text('Meeting Prep')),
-                  DataCell(Text('30')),
-                ]),
-              ],
             ),
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 16.0 * scale),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  icon: Icon(
-                    Icons.arrow_back_ios, 
-                    size: 20 * scale,
-                    color: _themeColors['text'] ?? Colors.black87,
-                  ),
-                  onPressed: () {
-                    // Handle previous page
-                  },
-                ),
-                Text(
-                  '1', 
-                  style: TextStyle(
-                    fontSize: 16 * scale, 
-                    fontWeight: FontWeight.bold,
-                    color: _themeColors['text'] ?? Colors.black87,
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.arrow_forward_ios, 
-                    size: 20 * scale,
-                    color: _themeColors['text'] ?? Colors.black87,
-                  ),
-                  onPressed: () {
-                    // Handle next page
-                  },
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );

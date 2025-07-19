@@ -40,8 +40,8 @@ Future<void> _requestNotificationPermissions() async {
             AndroidFlutterLocalNotificationsPlugin>();
     
     if (androidImplementation != null) {
-      final bool? granted = await androidImplementation.requestNotificationsPermission();
-      // print('[Main] Notification permission granted: $granted');
+      await androidImplementation.requestNotificationsPermission();
+      // print('[Main] Notification permission requested');
     }
   } catch (e) {
     // print('[Main] Error requesting notification permissions: $e');
@@ -108,11 +108,12 @@ class _LandingPageState extends State<LandingPage> {
       autoStartPomodoros: globalAutoStartPomodoros,
     );
     _audioController = AudioController();
+    _taskController = TaskController();
     _timerController.setAudioController(_audioController);
+    _timerController.setTaskController(_taskController);
     _timerController.addListener(_onTimerUpdate);
     _timerController.addListener(_onModeChanged);
     _pageController = PageController(initialPage: _currentPageIndex);
-    _taskController = TaskController();
     
     // Load user's timer settings
     _timerController.loadTimerSettings();
@@ -509,7 +510,7 @@ class _LandingPageState extends State<LandingPage> {
             Column(
           children: [
             // Header stays at the top
-            AppHeader(),
+            AppHeader(taskController: _taskController),
             
             // Swipeable content (timer and mode label)
             Expanded(
@@ -527,8 +528,8 @@ class _LandingPageState extends State<LandingPage> {
                     ),
                   ),
                   
-                  // Remove or reduce space before RoundCounter and tasks
-                  const SizedBox(height: 0),
+                  // Ultra-minimal spacing to prevent overflow
+                  const SizedBox(height: 2),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     constraints: const BoxConstraints(maxWidth: 400),
@@ -536,20 +537,20 @@ class _LandingPageState extends State<LandingPage> {
                       round: _timerController.round,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                     constraints: const BoxConstraints(maxWidth: 300),
                     child: Column(
                       children: [
                         TaskAdd(taskController: _taskController),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 2),
                         TaskList(taskController: _taskController),
                       ],
                     ),
                   ),
-                  // Reduce bottom space
-                  const SizedBox(height: 79),
+                  // Ultra-minimal bottom space
+                  const SizedBox(height: 25),
                 ],
               ),
             ),
@@ -609,7 +610,7 @@ class _LandingPageState extends State<LandingPage> {
         ),
         // Timer display with reset/skip buttons overlaid
         Padding(
-          padding: const EdgeInsets.only(top: 4, bottom: 50),
+          padding: const EdgeInsets.only(top: 4, bottom: 20),
           child: SizedBox(
             width: AppConstants.circularTimerSize,
             height: AppConstants.circularTimerSize,

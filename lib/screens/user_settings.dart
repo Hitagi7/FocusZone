@@ -531,53 +531,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
     );
   }
 
-  Widget _buildSliderSetting(double value, ValueChanged<double> onChanged, [String? suffixLabel, String? suffixValue, ValueChanged<String?>? onSuffixChanged]) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: Slider(
-              value: value,
-              min: 0,
-              max: 100,
-              divisions: 100,
-              onChanged: onChanged,
-              activeColor: Colors.red,
-              inactiveColor: Colors.grey[300],
-            ),
-          ),
-          if (suffixLabel != null && suffixValue != null && onSuffixChanged != null)
-            Row(
-              children: [
-                const SizedBox(width: 10),
-                Text(suffixLabel, style: const TextStyle(fontSize: 16)),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 50,
-                  child: TextField(
-                    controller: TextEditingController(text: suffixValue),
-                    keyboardType: TextInputType.number,
-                    onChanged: onSuffixChanged,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    ),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildColorThemeSetting(double scale) {
     return Padding(

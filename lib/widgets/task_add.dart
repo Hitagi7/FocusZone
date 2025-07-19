@@ -37,7 +37,7 @@ class _TaskAddState extends State<TaskAdd> {
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
-            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 1),
           ),
           onSubmitted: (_) => _addTask(),
         ),
