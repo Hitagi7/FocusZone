@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import '../controllers/audio_controller.dart';
+import '../../controller/audio_controller.dart';
 import 'ambient_sound_selector.dart';
 
 class SoundButton extends StatelessWidget {
   final AudioController audioController;
 
-  const SoundButton({
-    super.key,
-    required this.audioController,
-  });
+  const SoundButton({super.key, required this.audioController});
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +13,7 @@ class SoundButton extends StatelessWidget {
       listenable: audioController,
       builder: (context, child) {
         final hasSound = audioController.isPlaying;
-        
+
         return Opacity(
           opacity: hasSound ? 1 : 0.5,
           child: FloatingActionButton(
@@ -55,4 +52,4 @@ class SoundButton extends StatelessWidget {
       ),
     );
   }
-} 
+}

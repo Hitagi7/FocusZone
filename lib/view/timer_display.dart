@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/timer_mode.dart';
-import '../constants/app_constants.dart';
+import '../model/timer_mode.dart';
+import 'constants/app_constants.dart';
 import 'circular_progress_painter.dart';
 
 // Displays the timer with circular progress indicator
@@ -56,12 +56,12 @@ class _TimerDisplayState extends State<TimerDisplay> {
       int remainingSeconds = seconds % 60;
       return '${minutes.toString()}:${remainingSeconds.toString().padLeft(2, '0')}';
     }
-    
+
     if (_timerFormat == 'hours') {
       int totalMinutes = seconds ~/ 60;
       int hours = totalMinutes ~/ 60;
       int minutes = totalMinutes % 60;
-      
+
       // Always show hours format when user selected hours
       return '${hours}:${minutes.toString().padLeft(2, '0')}';
     } else {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../controllers/task_controller.dart';
+import '../controller/task_controller.dart';
 
 class TaskAdd extends StatefulWidget {
   final TaskController taskController;
@@ -44,4 +44,4 @@ class _TaskAddState extends State<TaskAdd> {
       ),
     );
   }
-} 
+}

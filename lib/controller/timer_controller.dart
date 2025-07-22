@@ -2,11 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/timer_mode.dart';
-import '../models/timer_config.dart';
-import '../constants/app_constants.dart';
+import '../model/timer_mode.dart';
+import '../model/timer_config.dart';
+import '../view/constants/app_constants.dart';
 import 'audio_controller.dart';
-import '../notification_service.dart';
+import 'notification_service.dart';
 import 'task_controller.dart';
 
 // Manages the timer state and logic
@@ -36,9 +36,11 @@ class TimerController extends ChangeNotifier {
   int _sessionStartTime = 0;
   bool _isTrackingSession = false;
 
-  TimerController({bool autoStartBreaks = false, bool autoStartPomodoros = false})
-      : _autoStartBreaks = autoStartBreaks,
-        _autoStartPomodoros = autoStartPomodoros;
+  TimerController({
+    bool autoStartBreaks = false,
+    bool autoStartPomodoros = false,
+  }) : _autoStartBreaks = autoStartBreaks,
+       _autoStartPomodoros = autoStartPomodoros;
 
   set autoStartBreaks(bool value) {
     _autoStartBreaks = value;
@@ -81,26 +83,28 @@ class TimerController extends ChangeNotifier {
   // Load user's timer settings
   Future<void> loadTimerSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // Load user's saved timer durations
     final pomodoroMinutes = prefs.getInt('pomodoroTime') ?? 25;
     final shortBreakMinutes = prefs.getInt('shortBreakTime') ?? 5;
     final longBreakMinutes = prefs.getInt('longBreakTime') ?? 20;
-    
+
     // Update the timer configurations with user's settings
     TimerConfigManager.updateAllConfigs(
       pomodoro: pomodoroMinutes * 60,
       shortBreak: shortBreakMinutes * 60,
       longBreak: longBreakMinutes * 60,
     );
-    
+
     // Update current timer if it's not running
     if (!_isRunning) {
       _timeLeft = TimerConfigManager.getConfig(_currentMode).time;
       notifyListeners();
     }
-    
-    print('Loaded timer settings: Pomodoro=$pomodoroMinutes, Short=$shortBreakMinutes, Long=$longBreakMinutes');
+
+    print(
+      'Loaded timer settings: Pomodoro=$pomodoroMinutes, Short=$shortBreakMinutes, Long=$longBreakMinutes',
+    );
   }
 
   // Check and update day tracking (call this when app starts)
@@ -108,24 +112,24 @@ class TimerController extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    
+
     // Get last activity date
     final lastActivityString = prefs.getString('lastActivityDate');
     DateTime? lastActivity;
     if (lastActivityString != null) {
       lastActivity = DateTime.parse(lastActivityString);
     }
-    
+
     // If it's a new day and we haven't tracked it yet
     if (lastActivity == null || !_isSameDay(lastActivity, today)) {
       print('New day detected, updating day tracking...');
-      
+
       // Update days accessed
       final currentDays = prefs.getInt('daysAccessed') ?? 0;
       final newDays = currentDays + 1;
       await prefs.setInt('daysAccessed', newDays);
       print('Updated days accessed: $currentDays -> $newDays');
-      
+
       // Update day streak
       if (lastActivity != null && _isConsecutiveDay(lastActivity, today)) {
         final currentStreak = prefs.getInt('dayStreak') ?? 0;
@@ -137,7 +141,7 @@ class TimerController extends ChangeNotifier {
         await prefs.setInt('dayStreak', 1);
         print('Reset day streak to 1');
       }
-      
+
       // Save today's date
       await prefs.setString('lastActivityDate', today.toIso8601String());
     }
@@ -145,22 +149,26 @@ class TimerController extends ChangeNotifier {
 
   // Start the timer
   void startTimer() {
-    print('startTimer called - current mode: $_currentMode, isTrackingSession: $_isTrackingSession');
+    print(
+      'startTimer called - current mode: $_currentMode, isTrackingSession: $_isTrackingSession',
+    );
     _timer?.cancel(); // Always clear any previous timer
     if (_isRunning) return;
 
     _isRunning = true;
     _reminderShown = false; // Reset reminder flag when starting
-    
+
     // Start tracking session time for all timer modes
     if (!_isTrackingSession) {
       _sessionStartTime = TimerConfigManager.getConfig(_currentMode).time;
       _isTrackingSession = true;
-      print('Started tracking ${_currentMode.toString()} session: $_sessionStartTime seconds');
+      print(
+        'Started tracking ${_currentMode.toString()} session: $_sessionStartTime seconds',
+      );
     } else {
       print('Already tracking session, not starting new tracking');
     }
-    
+
     notifyListeners();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -183,26 +191,32 @@ class TimerController extends ChangeNotifier {
 
   // Add actual time used to minutes focused
   Future<void> _addTimeUsed() async {
-    print('_addTimeUsed called - isTrackingSession: $_isTrackingSession, sessionStartTime: $_sessionStartTime, timeLeft: $_timeLeft');
-    
+    print(
+      '_addTimeUsed called - isTrackingSession: $_isTrackingSession, sessionStartTime: $_sessionStartTime, timeLeft: $_timeLeft',
+    );
+
     if (_isTrackingSession) {
       final prefs = await SharedPreferences.getInstance();
       final timeUsed = _sessionStartTime - _timeLeft; // Time actually used
       final minutesUsed = timeUsed ~/ 60; // Convert to minutes
-      
-      print('Calculated timeUsed: $timeUsed seconds, minutesUsed: $minutesUsed minutes');
-      
+
+      print(
+        'Calculated timeUsed: $timeUsed seconds, minutesUsed: $minutesUsed minutes',
+      );
+
       if (minutesUsed > 0) {
         final currentMinutes = prefs.getInt('hoursFocused') ?? 0;
         final newMinutes = currentMinutes + minutesUsed;
         await prefs.setInt('hoursFocused', newMinutes);
-        print('Added $minutesUsed minutes to focus time (${_currentMode.toString()}, used ${timeUsed}s out of ${_sessionStartTime}s)');
+        print(
+          'Added $minutesUsed minutes to focus time (${_currentMode.toString()}, used ${timeUsed}s out of ${_sessionStartTime}s)',
+        );
         print('Total minutes focused: $currentMinutes -> $newMinutes');
-        
+
         // Force a reload to verify the data was saved
         final verifyMinutes = prefs.getInt('hoursFocused') ?? 0;
         print('Verification - minutes focused after save: $verifyMinutes');
-        
+
         // Add minutes to the current active task if this is a Pomodoro session
         if (_currentMode == TimerMode.pomodoro && _taskController != null) {
           final taskIndex = _taskController!.getFirstUncompletedTaskIndex();
@@ -215,12 +229,14 @@ class TimerController extends ChangeNotifier {
             print('No uncompleted tasks found to add time to');
           }
         } else {
-          print('Not adding to task - Mode: $_currentMode, TaskController: ${_taskController != null}');
+          print(
+            'Not adding to task - Mode: $_currentMode, TaskController: ${_taskController != null}',
+          );
         }
       } else {
         print('No minutes to add (minutesUsed: $minutesUsed)');
       }
-      
+
       // Reset tracking
       _isTrackingSession = false;
       _sessionStartTime = 0;
@@ -244,18 +260,20 @@ class TimerController extends ChangeNotifier {
     _timer?.cancel();
     _timeLeft = TimerConfigManager.getConfig(_currentMode).time;
     _isRunning = false;
-    
+
     // Reset tracking for all timer modes
     _isTrackingSession = false;
     _sessionStartTime = 0;
     print('${_currentMode.toString()} reset, tracking cleared');
-    
+
     notifyListeners();
   }
 
   // Switch to a different timer mode
   void switchMode(TimerMode mode) {
-    print('switchMode called - from $_currentMode to $mode, isTrackingSession: $_isTrackingSession');
+    print(
+      'switchMode called - from $_currentMode to $mode, isTrackingSession: $_isTrackingSession',
+    );
     _timer?.cancel();
     _currentMode = mode;
     _timeLeft = TimerConfigManager.getConfig(_currentMode).time;
@@ -265,28 +283,30 @@ class TimerController extends ChangeNotifier {
 
   // Skip to the next mode
   Future<void> skipToNext() async {
-    print('skipToNext called - current mode: $_currentMode, isTrackingSession: $_isTrackingSession');
+    print(
+      'skipToNext called - current mode: $_currentMode, isTrackingSession: $_isTrackingSession',
+    );
     _timer?.cancel();
     _isRunning = false;
-    
+
     // Store current tracking state before adding time (for potential future use)
     // final wasTracking = _isTrackingSession;
     // final sessionStart = _sessionStartTime;
     // final timeLeft = _timeLeft;
-    
+
     // Add time used for all timer modes when skipping
     print('${_currentMode.toString()} skipped, adding time used...');
     await _addTimeUsed();
-    
+
     // Debug check after adding time
     await debugCheckMinutesFocused();
-    
+
     // Calculate next round for interval check
     int nextRound = _round;
     if (_currentMode == TimerMode.pomodoro) {
       nextRound++;
     }
-    
+
     // Determine the next mode based on current mode
     TimerMode nextMode;
     switch (_currentMode) {
@@ -300,9 +320,9 @@ class TimerController extends ChangeNotifier {
         nextMode = TimerMode.pomodoro;
         break;
     }
-    
+
     print('Switching from $_currentMode to $nextMode');
-    
+
     // Switch to the next mode
     switchMode(nextMode);
 
@@ -313,7 +333,9 @@ class TimerController extends ChangeNotifier {
 
     // Now check the toggles for the *new* mode
     if ((nextMode == TimerMode.pomodoro && _autoStartPomodoros) ||
-        ((nextMode == TimerMode.shortBreak || nextMode == TimerMode.longBreak) && _autoStartBreaks)) {
+        ((nextMode == TimerMode.shortBreak ||
+                nextMode == TimerMode.longBreak) &&
+            _autoStartBreaks)) {
       startTimer();
     }
   }
@@ -326,7 +348,7 @@ class TimerController extends ChangeNotifier {
 
     // Add time used for all timer modes
     _addTimeUsed();
-    
+
     // Increment round counter for pomodoro sessions
     if (_currentMode == TimerMode.pomodoro) {
       _round++;
@@ -343,12 +365,10 @@ class TimerController extends ChangeNotifier {
     _autoSwitchToNextMode();
   }
 
-
-
   bool _isSameDay(DateTime date1, DateTime date2) {
-    return date1.year == date2.year && 
-           date1.month == date2.month && 
-           date1.day == date2.day;
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
 
   bool _isConsecutiveDay(DateTime date1, DateTime date2) {
@@ -364,7 +384,7 @@ class TimerController extends ChangeNotifier {
     if (_currentMode == TimerMode.pomodoro) {
       nextRound++;
     }
-    
+
     switch (_currentMode) {
       case TimerMode.pomodoro:
         // After pomodoro, go to short break (or long break every X rounds)
@@ -411,10 +431,10 @@ class TimerController extends ChangeNotifier {
   void _checkReminder() {
     if (_reminderTime == 'Off') return; // Don't show reminders if turned off
     if (_reminderShown) return; // Don't show reminder multiple times
-    
+
     int totalTime = TimerConfigManager.getConfig(_currentMode).time;
     int timeElapsed = totalTime - _timeLeft;
-    
+
     if (_reminderTime == 'Last') {
       // Show reminder in the last X minutes
       if (_timeLeft <= _reminderMinutes * 60 && _timeLeft > 0) {
@@ -433,7 +453,7 @@ class TimerController extends ChangeNotifier {
   void _showReminderNotification() {
     String title;
     String body;
-    
+
     switch (_currentMode) {
       case TimerMode.pomodoro:
         title = 'Focus Reminder';
@@ -448,7 +468,7 @@ class TimerController extends ChangeNotifier {
         body = 'Take this time to relax and recharge.';
         break;
     }
-    
+
     NotificationService.showNotification(
       title: title,
       body: body,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../controllers/task_controller.dart';
+import '../controller/task_controller.dart';
 
 class TaskList extends StatelessWidget {
   final TaskController taskController;
@@ -33,7 +33,9 @@ class TaskList extends StatelessWidget {
                     final task = tasks[index];
                     return ListTile(
                       tileColor: Colors.white.withOpacity(0.08),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       leading: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -56,18 +58,24 @@ class TaskList extends StatelessWidget {
                         task.title,
                         style: TextStyle(
                           color: Colors.white,
-                          decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-                          decorationColor: task.isCompleted ? Colors.white : null,
+                          decoration: task.isCompleted
+                              ? TextDecoration.lineThrough
+                              : null,
+                          decorationColor: task.isCompleted
+                              ? Colors.white
+                              : null,
                           decorationThickness: task.isCompleted ? 2.0 : null,
                         ),
                       ),
-                      subtitle: task.minutesSpent > 0 ? Text(
-                        '${task.minutesSpent} minutes spent',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
-                      ) : null,
+                      subtitle: task.minutesSpent > 0
+                          ? Text(
+                              '${task.minutesSpent} minutes spent',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            )
+                          : null,
                       trailing: IconButton(
                         icon: Icon(Icons.close, color: Colors.redAccent),
                         onPressed: () => taskController.removeTask(index),
@@ -79,4 +87,4 @@ class TaskList extends StatelessWidget {
       },
     );
   }
-} 
+}

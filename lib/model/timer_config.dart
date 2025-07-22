@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 import 'timer_mode.dart';
-import '../constants/app_constants.dart';
+import '../view/constants/app_constants.dart';
 
 // Configuration for each timer mode
 class TimerConfig {
-  final String label;    // Display name
-  final int time;        // Duration in seconds
-  final Color color;     // Background color
+  final String label; // Display name
+  final int time; // Duration in seconds
+  final Color color; // Background color
 
-  TimerConfig({
-    required this.label,
-    required this.time,
-    required this.color,
-  });
+  TimerConfig({required this.label, required this.time, required this.color});
 }
 
 // Manages timer configurations for each mode
@@ -52,7 +48,11 @@ class TimerConfigManager {
   }
 
   // Update all configs at once (for user settings)
-  static void updateAllConfigs({required int pomodoro, required int shortBreak, required int longBreak}) {
+  static void updateAllConfigs({
+    required int pomodoro,
+    required int shortBreak,
+    required int longBreak,
+  }) {
     updateConfig(TimerMode.pomodoro, pomodoro);
     updateConfig(TimerMode.shortBreak, shortBreak);
     updateConfig(TimerMode.longBreak, longBreak);

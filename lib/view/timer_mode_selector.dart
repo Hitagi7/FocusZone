@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/timer_mode.dart';
-import '../models/timer_config.dart';
+import '../model/timer_mode.dart';
+import '../model/timer_config.dart';
 
 class TimerModeSelector extends StatelessWidget {
   final TimerMode currentMode;
@@ -26,7 +26,9 @@ class TimerModeSelector extends StatelessWidget {
               margin: EdgeInsets.symmetric(horizontal: 4),
               padding: EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: isSelected ? Colors.white.withOpacity(0.2) : Colors.transparent,
+                color: isSelected
+                    ? Colors.white.withOpacity(0.2)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
                   color: Colors.white.withOpacity(0.3),
@@ -39,7 +41,9 @@ class TimerModeSelector extends StatelessWidget {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   ),
                 ),
               ),

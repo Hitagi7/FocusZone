@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import '../constants/app_constants.dart';
-import '../screens/user_settings.dart';
-import '../screens/activity_report.dart';
-import '../controllers/task_controller.dart';
+import 'constants/app_constants.dart';
+import 'user_settings.dart';
+import 'activity_report.dart';
+import '../controller/task_controller.dart';
 
 // App header with logo, title, and action buttons
 class AppHeader extends StatelessWidget {
   final TaskController taskController;
-  
+
   const AppHeader({super.key, required this.taskController});
 
   @override
@@ -37,11 +37,7 @@ class AppHeader extends StatelessWidget {
           // App logo and title
           Row(
             children: [
-              Icon(
-                Icons.timer,
-                color: Colors.white,
-                size: iconSize,
-              ),
+              Icon(Icons.timer, color: Colors.white, size: iconSize),
               SizedBox(width: 12 * scale),
               Text(
                 AppConstants.appTitle,
@@ -59,13 +55,27 @@ class AppHeader extends StatelessWidget {
             fit: BoxFit.scaleDown,
             child: Row(
               children: [
-                _buildHeaderButton(context, Icons.insert_chart_outlined, 'Report', () {
-                  _showReportScreen(context);
-                }, buttonFontSize, buttonIconSize),
+                _buildHeaderButton(
+                  context,
+                  Icons.insert_chart_outlined,
+                  'Report',
+                  () {
+                    _showReportScreen(context);
+                  },
+                  buttonFontSize,
+                  buttonIconSize,
+                ),
                 SizedBox(width: 8 * scale),
-                _buildHeaderButton(context, Icons.settings, 'Settings', () {
-                  _showSettingsScreen(context);
-                }, buttonFontSize, buttonIconSize),
+                _buildHeaderButton(
+                  context,
+                  Icons.settings,
+                  'Settings',
+                  () {
+                    _showSettingsScreen(context);
+                  },
+                  buttonFontSize,
+                  buttonIconSize,
+                ),
               ],
             ),
           ),
@@ -75,16 +85,20 @@ class AppHeader extends StatelessWidget {
   }
 
   // Build header button with icon and label
-  Widget _buildHeaderButton(BuildContext context, IconData icon, String label, VoidCallback onPressed, double fontSize, double iconSize) {
+  Widget _buildHeaderButton(
+    BuildContext context,
+    IconData icon,
+    String label,
+    VoidCallback onPressed,
+    double fontSize,
+    double iconSize,
+  ) {
     return TextButton.icon(
       onPressed: onPressed,
       icon: Icon(icon, color: Colors.white, size: iconSize),
       label: Text(
         label,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: fontSize,
-        ),
+        style: TextStyle(color: Colors.white, fontSize: fontSize),
       ),
       style: TextButton.styleFrom(
         padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),

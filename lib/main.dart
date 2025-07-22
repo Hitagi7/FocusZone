@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'models/timer_mode.dart';
-import 'models/timer_config.dart';
-import 'constants/app_constants.dart';
-import 'widgets/app_header.dart';
-import 'widgets/timer_display.dart';
-import 'widgets/round_counter.dart';
-import 'widgets/sound_button.dart';
-import 'controllers/timer_controller.dart';
-import 'controllers/audio_controller.dart';
-import 'widgets/task_list.dart';
-import 'widgets/task_add.dart';
-import 'controllers/task_controller.dart';
-import 'notification_service.dart';
+import 'model/timer_mode.dart';
+import 'model/timer_config.dart';
+import 'view/constants/app_constants.dart';
+import 'view/app_header.dart';
+import 'view/timer_display.dart';
+import 'view/round_counter.dart';
+import 'view/sound_button.dart';
+import 'controller/timer_controller.dart';
+import 'controller/audio_controller.dart';
+import 'view/task_list.dart';
+import 'view/task_add.dart';
+import 'controller/task_controller.dart';
+import 'controller/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'view/quotes_page.dart';
 
-final GlobalKey<_LandingPageState> landingPageKey = GlobalKey<_LandingPageState>();
+final GlobalKey<_LandingPageState> landingPageKey =
+    GlobalKey<_LandingPageState>();
 
 bool globalAutoStartBreaks = false;
 bool globalAutoStartPomodoros = false;
@@ -34,11 +36,13 @@ Future<void> _requestNotificationPermissions() async {
   try {
     final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
         FlutterLocalNotificationsPlugin();
-    
+
     final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-    
+        flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+
     if (androidImplementation != null) {
       await androidImplementation.requestNotificationsPermission();
       // print('[Main] Notification permission requested');
@@ -93,7 +97,8 @@ class LandingPage extends StatefulWidget {
 class _LandingPageState extends State<LandingPage> {
   late TimerController _timerController;
   late AudioController _audioController;
-  int _currentPageIndex = 0; // Simple page index (0, 1, 2)
+  int _currentPageIndex =
+      1; // 0 = Quotes, 1 = Pomodoro, 2 = Short Break, 3 = Long Break
   late PageController _pageController;
   late TaskController _taskController;
   bool _isPageAnimating = false; // Add this flag
@@ -114,13 +119,13 @@ class _LandingPageState extends State<LandingPage> {
     _timerController.addListener(_onTimerUpdate);
     _timerController.addListener(_onModeChanged);
     _pageController = PageController(initialPage: _currentPageIndex);
-    
+
     // Load user's timer settings
     _timerController.loadTimerSettings();
-    
+
     // Load reminder settings
     _timerController.loadReminderSettings();
-    
+
     // Check day tracking when app starts
     _timerController.checkDayTracking();
   }
@@ -148,7 +153,7 @@ class _LandingPageState extends State<LandingPage> {
     // Update page index to match the new timer mode
     TimerMode newMode = _timerController.currentMode;
     int newPageIndex = _getPageIndexForMode(newMode);
-    
+
     if (_currentPageIndex != newPageIndex) {
       setState(() {
         _currentPageIndex = newPageIndex;
@@ -166,10 +171,10 @@ class _LandingPageState extends State<LandingPage> {
   void _showCompletionNotification() {
     // Get the current mode that just completed
     TimerMode completedMode = _timerController.currentMode;
-    
+
     // Show animated notification
     _showAnimatedNotification(completedMode);
-    
+
     // Show local notification with mode-specific content
     String title;
     String body;
@@ -187,11 +192,8 @@ class _LandingPageState extends State<LandingPage> {
         body = 'Your long break has ended. Time to get back to work!';
         break;
     }
-    
-    NotificationService.showNotification(
-      title: title,
-      body: body,
-    );
+
+    NotificationService.showNotification(title: title, body: body);
   }
 
   void _showAnimatedNotification(TimerMode completedMode) {
@@ -222,7 +224,10 @@ class _LandingPageState extends State<LandingPage> {
                     color: Colors.white,
                   ),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                     decoration: BoxDecoration(
                       color: _getCompletionColor(completedMode),
                       borderRadius: BorderRadius.circular(12),
@@ -244,9 +249,7 @@ class _LandingPageState extends State<LandingPage> {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Text(
-                            _getCompletionMessage(completedMode),
-                          ),
+                          child: Text(_getCompletionMessage(completedMode)),
                         ),
                       ],
                     ),
@@ -302,15 +305,15 @@ class _LandingPageState extends State<LandingPage> {
   // Handle skip button press
   void _handleSkipToNext() {
     _timerController.skipToNext();
-    
+
     // Update the page index to match the new timer mode
     TimerMode newMode = _timerController.currentMode;
     int newPageIndex = _getPageIndexForMode(newMode);
-    
+
     setState(() {
       _currentPageIndex = newPageIndex;
     });
-    
+
     // Animate to the new page
     _pageController.animateToPage(
       newPageIndex,
@@ -324,12 +327,14 @@ class _LandingPageState extends State<LandingPage> {
     setState(() {
       _currentPageIndex = pageIndex;
     });
-    
+
     // Get the mode for this page
-    TimerMode newMode = _getModeForPage(pageIndex);
-    
+    TimerMode? newMode = _getModeForPage(pageIndex);
+
     // Only switch timer mode if it's different and not animating
-    if (!_isPageAnimating && _timerController.currentMode != newMode) {
+    if (!_isPageAnimating &&
+        newMode != null &&
+        _timerController.currentMode != newMode) {
       HapticFeedback.selectionClick();
       _timerController.switchMode(newMode);
     }
@@ -339,29 +344,28 @@ class _LandingPageState extends State<LandingPage> {
     }
   }
 
-  // Simple mapping: page 0 = Pomodoro, page 1 = Short Break, page 2 = Long Break
-  TimerMode _getModeForPage(int pageIndex) {
+  // Update mapping functions for new page structure
+  TimerMode? _getModeForPage(int pageIndex) {
     switch (pageIndex) {
-      case 0:
-        return TimerMode.pomodoro;
       case 1:
-        return TimerMode.shortBreak;
+        return TimerMode.pomodoro;
       case 2:
+        return TimerMode.shortBreak;
+      case 3:
         return TimerMode.longBreak;
       default:
-        return TimerMode.pomodoro;
+        return null;
     }
   }
 
-  // Get page index for a given timer mode
   int _getPageIndexForMode(TimerMode mode) {
     switch (mode) {
       case TimerMode.pomodoro:
-        return 0;
-      case TimerMode.shortBreak:
         return 1;
-      case TimerMode.longBreak:
+      case TimerMode.shortBreak:
         return 2;
+      case TimerMode.longBreak:
+        return 3;
     }
   }
 
@@ -409,14 +413,16 @@ class _LandingPageState extends State<LandingPage> {
 
   // Get the background color for the current page
   Color _getBackgroundColor() {
-    return TimerConfigManager.getConfig(_getModeForPage(_currentPageIndex)).color;
+    return TimerConfigManager.getConfig(
+      _getModeForPage(_currentPageIndex) ?? TimerMode.pomodoro,
+    ).color;
   }
 
   // Load background image for specific timer mode
   Future<Widget> _loadBackgroundImage(TimerMode mode) async {
     String gifPath;
     Color fallbackColor;
-    
+
     switch (mode) {
       case TimerMode.pomodoro:
         gifPath = 'images/pomodoro_bg.gif';
@@ -432,20 +438,13 @@ class _LandingPageState extends State<LandingPage> {
         break;
     }
 
-    final List<String> assetPaths = [
-      gifPath,
-      'assets/$gifPath',
-    ];
+    final List<String> assetPaths = [gifPath, 'assets/$gifPath'];
 
     for (String path in assetPaths) {
       try {
         await rootBundle.load(path);
         // print('Successfully loaded: $path');
-        return Image.asset(
-          path,
-          fit: BoxFit.cover,
-          gaplessPlayback: true,
-        );
+        return Image.asset(path, fit: BoxFit.cover, gaplessPlayback: true);
       } catch (e) {
         // print('Failed to load $path: $e');
         continue;
@@ -459,16 +458,13 @@ class _LandingPageState extends State<LandingPage> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            fallbackColor,
-            fallbackColor.withValues(alpha: 0.8),
-          ],
+          colors: [fallbackColor, fallbackColor.withValues(alpha: 0.8)],
         ),
       ),
     );
   }
 
-    @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -479,7 +475,9 @@ class _LandingPageState extends State<LandingPage> {
             // Background image for all timer modes
             Positioned.fill(
               child: FutureBuilder<Widget>(
-                future: _loadBackgroundImage(_getModeForPage(_currentPageIndex)),
+                future: _loadBackgroundImage(
+                  _getModeForPage(_currentPageIndex) ?? TimerMode.pomodoro,
+                ),
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
                     return snapshot.data!;
@@ -502,74 +500,76 @@ class _LandingPageState extends State<LandingPage> {
             ),
             // Semi-transparent overlay for better text readability
             Positioned.fill(
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.3),
-              ),
+              child: Container(color: Colors.black.withValues(alpha: 0.3)),
             ),
             // Main content
             Column(
-          children: [
-            // Header stays at the top
-            AppHeader(taskController: _taskController),
-            
-            // Swipeable content (timer and mode label)
-            Expanded(
-              child: Column(
-                children: [
-                  Expanded(
-                    child: PageView(
-                      controller: _pageController,
-                      onPageChanged: _onPageChanged,
-                      children: [
-                        _buildTimerPage(0),
-                        _buildTimerPage(1),
-                        _buildTimerPage(2),
-                      ],
-                    ),
+              children: [
+                // Header stays at the top
+                AppHeader(taskController: _taskController),
+
+                // Swipeable content (timer and mode label)
+                Expanded(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: PageView(
+                          controller: _pageController,
+                          onPageChanged: _onPageChanged,
+                          children: [
+                            QuotesPage(), // index 0
+                            _buildTimerPage(1), // Pomodoro
+                            _buildTimerPage(2), // Short Break
+                            _buildTimerPage(3), // Long Break
+                          ],
+                        ),
+                      ),
+
+                      // Ultra-minimal spacing to prevent overflow
+                      const SizedBox(height: 2),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        constraints: const BoxConstraints(maxWidth: 400),
+                        child: RoundCounter(round: _timerController.round),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 0,
+                        ),
+                        constraints: const BoxConstraints(maxWidth: 300),
+                        child: Column(
+                          children: [
+                            TaskAdd(taskController: _taskController),
+                            const SizedBox(height: 2),
+                            TaskList(taskController: _taskController),
+                          ],
+                        ),
+                      ),
+                      // Ultra-minimal bottom space
+                      const SizedBox(height: 25),
+                    ],
                   ),
-                  
-                  // Ultra-minimal spacing to prevent overflow
-                  const SizedBox(height: 2),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    constraints: const BoxConstraints(maxWidth: 400),
-                    child: RoundCounter(
-                      round: _timerController.round,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                    constraints: const BoxConstraints(maxWidth: 300),
-                    child: Column(
-                      children: [
-                        TaskAdd(taskController: _taskController),
-                        const SizedBox(height: 2),
-                        TaskList(taskController: _taskController),
-                      ],
-                    ),
-                  ),
-                  // Ultra-minimal bottom space
-                  const SizedBox(height: 25),
-                ],
-              ),
+                ),
+              ],
             ),
           ],
         ),
-      ],
-    ),
-    ),
-    floatingActionButton: Align(
-      alignment: Alignment.bottomRight,
-      child: SoundButton(
-        audioController: _audioController,
       ),
-    ),
-  );
-}
+      floatingActionButton: Align(
+        alignment: Alignment.bottomRight,
+        child: SoundButton(audioController: _audioController),
+      ),
+    );
+  }
 
-  // Build the timer page for each mode
+  // Update _buildTimerPage to accept the new pageIndex
   Widget _buildTimerPage(int pageIndex) {
+    final TimerMode? mode = _getModeForPage(pageIndex);
+    if (mode == null) {
+      return const SizedBox.shrink();
+    }
     return Column(
       children: [
         // Enhanced mode label
@@ -645,7 +645,11 @@ class _LandingPageState extends State<LandingPage> {
                     bottom: -10, // less negative to lower it more
                     child: IconButton(
                       onPressed: _handleSkipToNext,
-                      icon: Icon(Icons.skip_next, color: Colors.white, size: 46),
+                      icon: Icon(
+                        Icons.skip_next,
+                        color: Colors.white,
+                        size: 46,
+                      ),
                     ),
                   ),
               ],
