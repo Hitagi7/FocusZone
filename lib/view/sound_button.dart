@@ -4,8 +4,9 @@ import 'ambient_sound_selector.dart';
 
 class SoundButton extends StatelessWidget {
   final AudioController audioController;
+  final String modeTitle;
 
-  const SoundButton({super.key, required this.audioController});
+  const SoundButton({super.key, required this.audioController, required this.modeTitle});
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +46,7 @@ class SoundButton extends StatelessWidget {
         maxChildSize: 0.8,
         builder: (context, scrollController) => AmbientSoundSelector(
           audioController: audioController,
+          modeTitle: modeTitle,
           onSoundSelected: () {
             // Optional callback when sound is selected
           },

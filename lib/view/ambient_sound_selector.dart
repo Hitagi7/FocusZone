@@ -4,11 +4,13 @@ import '../controller/audio_controller.dart';
 
 class AmbientSoundSelector extends StatefulWidget {
   final AudioController audioController;
+  final String modeTitle;
   final VoidCallback? onSoundSelected;
 
   const AmbientSoundSelector({
     super.key,
     required this.audioController,
+    required this.modeTitle,
     this.onSoundSelected,
   });
 
@@ -87,7 +89,7 @@ class _AmbientSoundSelectorState extends State<AmbientSoundSelector>
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Ambient Sounds',
+                  widget.modeTitle,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,

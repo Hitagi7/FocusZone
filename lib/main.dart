@@ -372,11 +372,11 @@ class _LandingPageState extends State<LandingPage> {
   // Get the label for each mode
   String _getModeLabel(int pageIndex) {
     switch (pageIndex) {
-      case 0:
-        return 'Pomodoro';
       case 1:
-        return 'Short Break';
+        return 'Pomodoro';
       case 2:
+        return 'Short Break';
+      case 3:
         return 'Long Break';
       default:
         return 'Pomodoro';
@@ -386,11 +386,11 @@ class _LandingPageState extends State<LandingPage> {
   // Get the icon for each mode
   IconData _getModeIcon(int pageIndex) {
     switch (pageIndex) {
-      case 0:
-        return Icons.work;
       case 1:
-        return Icons.coffee;
+        return Icons.work;
       case 2:
+        return Icons.coffee;
+      case 3:
         return Icons.weekend;
       default:
         return Icons.work;
@@ -400,11 +400,11 @@ class _LandingPageState extends State<LandingPage> {
   // Get the description for each mode
   String _getModeDescription(int pageIndex) {
     switch (pageIndex) {
-      case 0:
-        return 'Focus on your task';
       case 1:
-        return 'Take a quick rest';
+        return 'Focus on your task';
       case 2:
+        return 'Take a quick rest';
+      case 3:
         return 'Time for a longer break';
       default:
         return 'Focus on your task';
@@ -462,6 +462,17 @@ class _LandingPageState extends State<LandingPage> {
         ),
       ),
     );
+  }
+
+  String _getModeLabelForTimerMode(TimerMode mode) {
+    switch (mode) {
+      case TimerMode.pomodoro:
+        return 'Pomodoro';
+      case TimerMode.shortBreak:
+        return 'Short Break';
+      case TimerMode.longBreak:
+        return 'Long Break';
+    }
   }
 
   @override
@@ -539,7 +550,10 @@ class _LandingPageState extends State<LandingPage> {
       ),
       floatingActionButton: Align(
         alignment: Alignment.bottomRight,
-        child: SoundButton(audioController: _audioController),
+        child: SoundButton(
+          audioController: _audioController,
+          modeTitle: _getModeLabelForTimerMode(_timerController.currentMode),
+        ),
       ),
     );
   }
