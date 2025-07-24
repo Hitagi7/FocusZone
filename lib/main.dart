@@ -525,28 +525,8 @@ class _LandingPageState extends State<LandingPage> {
                         ),
                       ),
 
-                      // Ultra-minimal spacing to prevent overflow
-                      const SizedBox(height: 2),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        constraints: const BoxConstraints(maxWidth: 400),
-                        child: RoundCounter(round: _timerController.round),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 0,
-                        ),
-                        constraints: const BoxConstraints(maxWidth: 300),
-                        child: Column(
-                          children: [
-                            TaskAdd(taskController: _taskController),
-                            const SizedBox(height: 2),
-                            TaskList(taskController: _taskController),
-                          ],
-                        ),
-                      ),
+                      // (RoundCounter moved inside _buildTimerPage)
+                      // (Task widgets moved inside _buildTimerPage)
                       // Ultra-minimal bottom space
                       const SizedBox(height: 25),
                     ],
@@ -610,7 +590,7 @@ class _LandingPageState extends State<LandingPage> {
         ),
         // Timer display with reset/skip buttons overlaid
         Padding(
-          padding: const EdgeInsets.only(top: 4, bottom: 20),
+          padding: const EdgeInsets.only(top: 4, bottom: 0),
           child: SizedBox(
             width: AppConstants.circularTimerSize,
             height: AppConstants.circularTimerSize,
@@ -654,6 +634,26 @@ class _LandingPageState extends State<LandingPage> {
                   ),
               ],
             ),
+          ),
+        ),
+        // RoundCounter directly below timer
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: RoundCounter(round: _timerController.round),
+        ),
+        // Task widgets directly below round counter
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: Column(
+            children: [
+              TaskAdd(taskController: _taskController),
+              const SizedBox(height: 2),
+              TaskList(taskController: _taskController),
+            ],
           ),
         ),
       ],

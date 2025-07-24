@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 class QuotesPage extends StatefulWidget {
-  const QuotesPage({Key? key}) : super(key: key);
+  const QuotesPage({super.key});
 
   @override
   State<QuotesPage> createState() => _QuotesPageState();
@@ -119,9 +119,9 @@ class _QuotesPageState extends State<QuotesPage> {
               ElevatedButton.icon(
                 onPressed: _loading ? null : _fetchQuote,
                 icon: const Icon(Icons.refresh, color: Colors.white),
-                label: const Text(
-                  'New Quote',
-                  style: TextStyle(color: Colors.white),
+                label: Text(
+                  (_error == 'No internet connection. Please connect to the internet.') ? 'Reload' : 'New Quote',
+                  style: const TextStyle(color: Colors.white),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
