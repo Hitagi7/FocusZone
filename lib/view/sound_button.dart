@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../controller/audio_controller.dart';
+import '../controller/audio_controller.dart';
 import 'ambient_sound_selector.dart';
 
 class SoundButton extends StatelessWidget {

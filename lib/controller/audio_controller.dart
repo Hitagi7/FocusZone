@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import '../model/ambient_sound.dart';
 
 class AudioController extends ChangeNotifier {
   final Map<String, AudioPlayer> _audioPlayers = {};
@@ -30,23 +31,23 @@ class AudioController extends ChangeNotifier {
   }
 
   // Toggle sound on/off
-  Future<void> toggleSound(String soundId, String assetPath) async {
-    if (_activeSounds.contains(soundId)) {
-      await stopSound(soundId);
+  Future<void> toggleSound(AmbientSound sound) async {
+    if (_activeSounds.contains(sound.id)) {
+      await stopSound(sound.id);
     } else {
-      await playSound(soundId, assetPath);
+      await playSound(sound);
     }
   }
 
   // Play ambient sound
-  Future<void> playSound(String soundId, String assetPath) async {
+  Future<void> playSound(AmbientSound sound) async {
     try {
-      final player = _getAudioPlayer(soundId);
-      await player.play(AssetSource(assetPath));
-      _activeSounds.add(soundId);
+      final player = _getAudioPlayer(sound.id);
+      await player.play(AssetSource(sound.assetPath));
+      _activeSounds.add(sound.id);
       notifyListeners();
     } catch (e) {
-      debugPrint('Error playing sound $soundId: $e');
+      debugPrint('Error playing sound ${sound.id}: $e');
     }
   }
 
