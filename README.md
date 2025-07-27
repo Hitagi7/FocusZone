@@ -87,7 +87,7 @@ lib/
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Hitagi7/FocusZone.git
    cd FocusZone
    ```
 
@@ -99,6 +99,10 @@ lib/
 3. **Run the app**
    ```bash
    flutter run
+   ```
+   or
+   ```bash
+   flutter run -d chrome
    ```
 
 ## Dependencies
