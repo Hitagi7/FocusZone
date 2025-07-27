@@ -90,7 +90,7 @@ class TaskController extends ChangeNotifier {
       final oldMinutes = _tasks[taskIndex].minutesSpent;
       _tasks[taskIndex].minutesSpent += minutes;
       print(
-        'Added $minutes minutes to task "${_tasks[taskIndex].title}" (${oldMinutes} -> ${_tasks[taskIndex].minutesSpent} minutes)',
+        'Added $minutes minutes to task "${_tasks[taskIndex].title}" ($oldMinutes -> ${_tasks[taskIndex].minutesSpent} minutes)',
       );
       _saveTasks();
       notifyListeners();

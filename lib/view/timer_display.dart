@@ -63,7 +63,7 @@ class _TimerDisplayState extends State<TimerDisplay> {
       int minutes = totalMinutes % 60;
 
       // Always show hours format when user selected hours
-      return '${hours}:${minutes.toString().padLeft(2, '0')}';
+      return '$hours:${minutes.toString().padLeft(2, '0')}';
     } else {
       // Default minutes format
       int minutes = seconds ~/ 60;
